@@ -9,6 +9,7 @@
 #include <charconv>
 #include <random>
 #include <chrono>
+#include <sstream>
 
 #define PIN_SIZE 4
 
@@ -67,6 +68,12 @@ std::ostream &operator<<(std::ostream &os, const State &g) {
     return os;
 }
 
+std::string to_string(const State &s) {
+    ostringstream ss;
+    ss << s;
+    return ss.str();
+}
+
 //-----------------------------------------------------------------------
 class Mastermind {
 private:
@@ -118,17 +125,14 @@ bool playAuto(Mastermind &mm, State &sol) {
     int maxTries = 10;
 
     int i = 0;
-    while (!a.allBlacks() && i < maxTries) {
+    while (!a.allBlacks() && i++ < maxTries) {
         r = mm.solve(a);
         a = Mastermind::answer(sol, r);
-        i++;
     }
     return i < maxTries;
 }
 
 int playAuto() {
-    Mastermind mm;
-
     std::random_device dev;
     std::mt19937 rng(dev());
     std::uniform_int_distribution<std::mt19937::result_type> dist(1, 5);
@@ -138,23 +142,23 @@ int playAuto() {
     using std::chrono::duration;
     using std::chrono::milliseconds;
 
-    int tries = 10000;
+    int tries = 100000;
     duration<double, std::milli> sum{};
     for (int i = 0; i < tries; ++i) {
-        State sol(5005);
+        Mastermind mm;
+        State sol;
         for (int j = 0; j < 4; ++j) {
-            // sol[j] = (char) dist(rng);
+            sol[j] = (char) (dist(rng) + '0');
         }
 
         auto t1 = high_resolution_clock::now();
         if (!playAuto(mm, sol)) {
-            throw logic_error("not solved");
+            throw logic_error("not solved " + to_string(sol));
         }
         auto t2 = high_resolution_clock::now();
 
         auto ms_int = duration_cast<milliseconds>(t2 - t1);
         sum += t2 - t1;
-
     }
     std::cout << "solved " << tries << ", took " << sum.count() << "ms\n";
 
@@ -192,7 +196,7 @@ int playManual() {
 
 int main() {
     return playAuto();
-    // return playManual();
+    //return playManual();
 }
 
 #endif //HSNR_WSY_MASTERMIND_H

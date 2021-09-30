@@ -41,8 +41,8 @@ State Mastermind::nextGuess(const Pigs &a) {
 
     vector<int> invalid;
     for (int i = 0; i < _space.size(); ++i) {
-        const Pigs &sans = answer(last, _space[i]);
-        if (!sans.sameAs(a)) {
+        const Pigs &pigs = answer(last, _space[i]);
+        if (!pigs.sameAs(a)) {
             invalid.push_back(i);
         }
     }
