@@ -3,21 +3,14 @@
 #include <cmath>
 
 void Mastermind::setup() {
-    int min = 0;
-    int max = 0;
-    for (int i = 0; i < PPR; ++i) {
-        min += 1 * (int) pow(10, i);
-        max += CLS * (int) pow(10, i);
-    }
-
-    array<char, PPR> arr{'0', '0', '0', '0'};
+    Guess arr;
     _space.push_back(arr);
     int i = 0;
     while (i < _size) {
         int d = PPR - 1;
         arr[d]++;
         while (arr[d] > CLS + '0') {
-            arr[d--] = '1';
+            arr[d--] = '0';
             arr[d]++;
         }
         _space[i] = (arr);
@@ -25,28 +18,27 @@ void Mastermind::setup() {
     }
 }
 
-array<char, 4> Mastermind::solve() {
-    array<char, 4> guess{'1', '1', '2', '2'};
+Guess Mastermind::solve() {
+    Guess guess(1122);
     _hist.push_back(guess);
     return guess;
 }
 
-array<char, 4> Mastermind::solve(const Pigs &a) {
+Guess Mastermind::solve(const Pigs &a) {
     if (a.b == 4) {
         return _hist.back(); // solved
     }
     if (_hist.empty()) {
         return solve();
     }
-    array<char, 4> guess = nextGuess(a);
+    Guess guess = nextGuess(a);
     _hist.push_back(guess);
     return guess;
 }
 
-array<char, 4> Mastermind::nextGuess(const Pigs &a) {
-    array<char, 4> last = _hist.back();
+Guess Mastermind::nextGuess(const Pigs &a) {
+    Guess last = _hist.back();
 
-    size_t size = _space.size();
     vector<int> invalid;
     for (int i = 0; i < _space.size(); ++i) {
         const Pigs &sans = answer(last, _space[i]);
@@ -62,7 +54,7 @@ array<char, 4> Mastermind::nextGuess(const Pigs &a) {
     return *_space.begin();
 }
 
-Pigs Mastermind::answer(array<char, 4> a, array<char, 4> b) {
+Pigs Mastermind::answer(Guess a, Guess b) {
     short black = 0;
     for (int i = 0; i < PPR; ++i) {
         char gd = a[i];
