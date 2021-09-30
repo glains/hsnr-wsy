@@ -3,81 +3,90 @@
 #include <cmath>
 
 void Mastermind::setup() {
-    TYPE min = 0;
-    TYPE max = 0;
+    int min = 0;
+    int max = 0;
     for (int i = 0; i < PPR; ++i) {
-        min += 1 * pow(10, i);
-        max += CLS * pow(10, i);
+        min += 1 * (int) pow(10, i);
+        max += CLS * (int) pow(10, i);
     }
-    for (TYPE i = min; i <= max; i++) {
-        _space.insert(i);
+
+    array<char, PPR> arr{'0', '0', '0', '0'};
+    _space.push_back(arr);
+    int i = 0;
+    while (i < _size) {
+        int d = PPR - 1;
+        arr[d]++;
+        while (arr[d] > CLS + '0') {
+            arr[d--] = '1';
+            arr[d]++;
+        }
+        _space[i] = (arr);
+        ++i;
     }
 }
 
-TYPE Mastermind::solve() {
-    TYPE guess = 1122;
+array<char, 4> Mastermind::solve() {
+    array<char, 4> guess{'1', '1', '2', '2'};
     _hist.push_back(guess);
     return guess;
 }
 
-TYPE Mastermind::solve(const Answer &a) {
+array<char, 4> Mastermind::solve(const Pigs &a) {
     if (a.b == 4) {
         return _hist.back(); // solved
     }
     if (_hist.empty()) {
         return solve();
     }
-    TYPE guess = nextGuess(a);
+    array<char, 4> guess = nextGuess(a);
     _hist.push_back(guess);
     return guess;
 }
 
-TYPE Mastermind::nextGuess(const Answer &a) {
-    TYPE last = _hist.back();
+array<char, 4> Mastermind::nextGuess(const Pigs &a) {
+    array<char, 4> last = _hist.back();
 
-    vector<TYPE> invalid;
-    for (const auto &s: _space) {
-        const Answer &sans = answer(last, s);
+    size_t size = _space.size();
+    vector<int> invalid;
+    for (int i = 0; i < _space.size(); ++i) {
+        const Pigs &sans = answer(last, _space[i]);
         if (!sans.sameAs(a)) {
-            invalid.push_back(s);
+            invalid.push_back(i);
         }
     }
-    for (const auto &val: invalid) {
-        _space.erase(val);
+
+    for (size_t i = invalid.size(); i-- > 0;) {
+        _space.erase(_space.begin() + invalid[i]);
     }
 
     return *_space.begin();
 }
 
-Answer Mastermind::answer(TYPE guess, TYPE cand) const {
-    TYPE b = 0;
+Pigs Mastermind::answer(array<char, 4> a, array<char, 4> b) {
+    short black = 0;
     for (int i = 0; i < PPR; ++i) {
-        int p = (int) pow(10, i);
-        int gd = (guess / p) % 10;
-        int cd = (cand / p) % 10;
-        if (cd < 9 && gd == cd) {
-            b++;
-            guess += (9 - gd) * p;
-            cand += (9 - cd) * p;
+        char gd = a[i];
+        char cd = b[i];
+        if (gd == cd) {
+            black++;
+            a[i] = '9';
+            b[i] = '9';
         }
     }
 
-    TYPE w = 0;
+    short white = 0;
     for (int i = 0; i < PPR; ++i) {
-        int gp = (int) pow(10, i);
-        int gd = (guess / gp) % 10;
+        char gd = a[i];
         for (int j = 0; j < PPR; ++j) {
-            int cp = (int) pow(10, j);
-            int cd = (cand / cp) % 10;
-            if (cd < 9 && gd == cd) {
-                w++;
-                guess += (9 - gd) * gp;
-                cand += (9 - cd) * cp;
+            char cd = b[j];
+            if (cd < '9' && gd == cd) {
+                white++;
+                a[i] = '9';
+                b[j] = '9';
                 break;
             }
         }
     }
 
-    return {b, w};
+    return {black, white};
 }
-
