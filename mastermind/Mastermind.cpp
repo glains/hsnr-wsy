@@ -1,5 +1,6 @@
 #include "Mastermind.h"
 
+#include <set>
 #include <cmath>
 
 void Mastermind::setup() {
@@ -39,17 +40,10 @@ State Mastermind::solve(const Pigs &a) {
 State Mastermind::nextGuess(const Pigs &a) {
     State last = _hist.back();
 
-    vector<int> invalid;
-    for (int i = 0; i < _space.size(); ++i) {
-        const Pigs &pigs = answer(last, _space[i]);
-        if (!pigs.sameAs(a)) {
-            invalid.push_back(i);
-        }
-    }
-
-    for (size_t i = invalid.size(); i-- > 0;) {
-        _space.erase(_space.begin() + invalid[i]);
-    }
+    _space.erase(std::remove_if(_space.begin(), _space.end(), [&a, &last](const State &s) {
+        const Pigs &pigs = answer(last, s);
+        return !pigs.sameAs(a);
+    }), _space.end());
 
     return *_space.begin();
 }

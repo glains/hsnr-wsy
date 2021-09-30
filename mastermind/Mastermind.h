@@ -59,6 +59,10 @@ public:
     char operator[](int i) const { return v[i]; }
 
     char &operator[](int i) { return v[i]; }
+
+    friend bool operator==(const State &s1, const State &s2) {
+        return s1.v == s2.v;
+    }
 };
 
 std::ostream &operator<<(std::ostream &os, const State &g) {
