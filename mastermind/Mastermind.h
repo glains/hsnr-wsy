@@ -79,6 +79,8 @@ private:
 
     void setup();
 
+    Guess nextGuess(const Pigs &a);
+
 public:
     Mastermind() : _space(_size) {
         setup();
@@ -87,8 +89,6 @@ public:
     Guess solve();
 
     Guess solve(const Pigs &a);
-
-    Guess nextGuess(const Pigs &a);
 
     static Pigs answer(Guess a, Guess b);
 };
