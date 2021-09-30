@@ -86,10 +86,28 @@ public:
         setup();
     }
 
+    /**
+     * Computes an initial guess.
+     *
+     * @return the guess
+     */
     Guess solve();
 
+    /**
+     * Computes a new guess based on the result of the last one.
+     *
+     * @param a the pigs of the last guess
+     * @return the new guess
+     */
     Guess solve(const Pigs &a);
 
+    /**
+     * Obtains the amount of pigs by comparing two guesses.
+     *
+     * @param a the first guess
+     * @param b the second guess
+     * @return the amount of pigs
+     */
     static Pigs answer(Guess a, Guess b);
 };
 
