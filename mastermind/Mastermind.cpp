@@ -3,7 +3,7 @@
 #include <cmath>
 
 void Mastermind::setup() {
-    Guess arr;
+    State arr;
     _space.push_back(arr);
     int i = 0;
     while (i < _size) {
@@ -18,26 +18,26 @@ void Mastermind::setup() {
     }
 }
 
-Guess Mastermind::solve() {
-    Guess guess(1122);
+State Mastermind::solve() {
+    State guess(1122);
     _hist.push_back(guess);
     return guess;
 }
 
-Guess Mastermind::solve(const Pigs &a) {
+State Mastermind::solve(const Pigs &a) {
     if (a.b == 4) {
         return _hist.back(); // solved
     }
     if (_hist.empty()) {
         return solve();
     }
-    Guess guess = nextGuess(a);
+    State guess = nextGuess(a);
     _hist.push_back(guess);
     return guess;
 }
 
-Guess Mastermind::nextGuess(const Pigs &a) {
-    Guess last = _hist.back();
+State Mastermind::nextGuess(const Pigs &a) {
+    State last = _hist.back();
 
     vector<int> invalid;
     for (int i = 0; i < _space.size(); ++i) {
@@ -54,7 +54,7 @@ Guess Mastermind::nextGuess(const Pigs &a) {
     return *_space.begin();
 }
 
-Pigs Mastermind::answer(Guess a, Guess b) {
+Pigs Mastermind::answer(State a, State b) {
     short black = 0;
     for (int i = 0; i < PPR; ++i) {
         char gd = a[i];

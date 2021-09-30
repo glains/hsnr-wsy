@@ -45,13 +45,13 @@ std::ostream &operator<<(std::ostream &os, const Pigs &a) {
 }
 
 //-----------------------------------------------------------------------
-class Guess {
+class State {
 public:
     array<char, 4> v{};
 
-    Guess() : v({'0', '0', '0', '0'}) {}
+    State() : v({'0', '0', '0', '0'}) {}
 
-    explicit Guess(size_t value) {
+    explicit State(size_t value) {
         std::to_chars(v.begin(), v.end(), value);
     }
 
@@ -60,7 +60,7 @@ public:
     char &operator[](int i) { return v[i]; }
 };
 
-std::ostream &operator<<(std::ostream &os, const Guess &g) {
+std::ostream &operator<<(std::ostream &os, const State &g) {
     for (char c: g.v) {
         os << std::to_string(c - '0');
     }
@@ -74,12 +74,12 @@ private:
     const static int PPR = 4; // pins per row
 
     const int _size = (int) pow(6, PPR);
-    vector<Guess> _hist;
-    vector<Guess> _space;
+    vector<State> _hist;
+    vector<State> _space;
 
     void setup();
 
-    Guess nextGuess(const Pigs &a);
+    State nextGuess(const Pigs &a);
 
 public:
     Mastermind() : _space(_size) {
@@ -91,7 +91,7 @@ public:
      *
      * @return the guess
      */
-    Guess solve();
+    State solve();
 
     /**
      * Computes a new guess based on the result of the last one.
@@ -99,7 +99,7 @@ public:
      * @param a the pigs of the last guess
      * @return the new guess
      */
-    Guess solve(const Pigs &a);
+    State solve(const Pigs &a);
 
     /**
      * Obtains the amount of pigs by comparing two guesses.
@@ -108,12 +108,12 @@ public:
      * @param b the second guess
      * @return the amount of pigs
      */
-    static Pigs answer(Guess a, Guess b);
+    static Pigs answer(State a, State b);
 };
 
 //-----------------------------------------------------------------------
-bool playAuto(Mastermind &mm, Guess &sol) {
-    Guess r;
+bool playAuto(Mastermind &mm, State &sol) {
+    State r;
     Pigs a{};
     int maxTries = 10;
 
@@ -141,7 +141,7 @@ int playAuto() {
     int tries = 10000;
     duration<double, std::milli> sum{};
     for (int i = 0; i < tries; ++i) {
-        Guess sol(5005);
+        State sol(5005);
         for (int j = 0; j < 4; ++j) {
             // sol[j] = (char) dist(rng);
         }
@@ -164,7 +164,7 @@ int playAuto() {
 int playManual() {
     Mastermind mm;
 
-    Guess r;
+    State r;
     Pigs a{};
     int maxTries = 10;
 
