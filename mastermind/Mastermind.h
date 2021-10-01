@@ -32,11 +32,11 @@ public:
         w = (short) stoi(v.substr(1, 2));
     }
 
-    bool sameAs(const Pigs &o) const {
+    [[nodiscard]] bool sameAs(const Pigs &o) const {
         return w == o.w && b == o.b;
     }
 
-    bool allBlacks() const {
+    [[nodiscard]] bool allBlacks() const {
         return b == PIN_SIZE;
     }
 };
