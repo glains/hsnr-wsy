@@ -5,7 +5,7 @@
 
 void Mastermind::setup() {
     State arr;
-    _space.push_back(arr);
+    _sspace.push_back(arr);
     int i = 0;
     while (i < _size) {
         int d = PPR - 1;
@@ -14,7 +14,7 @@ void Mastermind::setup() {
             arr[d--] = '0';
             arr[d]++;
         }
-        _space[i] = (arr);
+        _sspace[i] = (arr);
         ++i;
     }
 }
@@ -32,6 +32,9 @@ State Mastermind::solve(const Pigs &a) {
     if (_hist.empty()) {
         return solve();
     }
+    if (_sspace.empty()) {
+        throw std::domain_error("no more solutions in sspace")
+    }
     State guess = nextGuess(a);
     _hist.push_back(guess);
     return guess;
@@ -40,12 +43,12 @@ State Mastermind::solve(const Pigs &a) {
 State Mastermind::nextGuess(const Pigs &a) {
     State last = _hist.back();
 
-    _space.erase(std::remove_if(_space.begin(), _space.end(), [&a, &last](const State &s) {
+    _sspace.erase(std::remove_if(_sspace.begin(), _sspace.end(), [&a, &last](const State &s) {
         const Pigs &pigs = answer(last, s);
         return !pigs.sameAs(a);
-    }), _space.end());
+    }), _sspace.end());
 
-    return *_space.begin();
+    return *_sspace.begin();
 }
 
 Pigs Mastermind::answer(State a, State b) {

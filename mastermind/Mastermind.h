@@ -86,14 +86,14 @@ private:
 
     const int _size = (int) pow(6, PPR);
     vector<State> _hist;
-    vector<State> _space;
+    vector<State> _sspace;
 
     void setup();
 
     State nextGuess(const Pigs &a);
 
 public:
-    Mastermind() : _space(_size) {
+    Mastermind() : _sspace(_size) {
         setup();
     }
 
