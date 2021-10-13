@@ -42,7 +42,7 @@ public:
     }
 
     [[nodiscard]] bool solved() const {
-        return _pins == 1 && isSet(_lastPin.first, _lastPin.first);
+        return _pins == 1 && isSet(_lastPin.first, _lastPin.second);
     }
 
     void set(int row, int col, char val) {
