@@ -4,6 +4,7 @@
 #include <stack>
 #include <iostream>
 #include <chrono>
+#include <algorithm>
 
 using namespace std;
 
@@ -184,6 +185,19 @@ public:
     void addPagoda(short *arr) {
         _ptables.push_back(arr);
     }
+
+    [[nodiscard]] vector<Move> history() const {
+        size_t n = _hist.size();
+        stack<Move> hist(_hist);
+
+        vector<Move> res;
+        for (size_t i = 0; i < n; ++i) {
+            res.push_back(hist.top());
+            hist.pop();
+        }
+        reverse(res.begin(), res.end());
+        return res;
+    }
 };
 
 std::ostream &operator<<(std::ostream &os, const Board &b) {
@@ -243,25 +257,39 @@ using std::chrono::milliseconds;
 #define DUR_T duration<long long int, std::nano>
 
 void benchmark(Board &b) {
-    const int tries = 10000;
+    const int tries = 100;
+
+    // warmup
+    for (int i = 0; i < tries / 2; ++i) {
+        Board tmp(b);
+        if (!solve(tmp)) {
+            throw logic_error("not solved");
+        }
+    }
+
+    size_t moves = 0;
     DUR_T elapsed = high_resolution_clock::duration::zero();
     for (int i = 0; i < tries; ++i) {
 
+        Board tmp(b);
         auto t1 = high_resolution_clock::now();
-        if (!solve(b)) {
+        if (!solve(tmp)) {
             throw logic_error("not solved");
         }
         auto t2 = high_resolution_clock::now();
+
+        vector<Move> hist = tmp.history();
+        moves += hist.size();
 
         auto ms_int = duration_cast<milliseconds>(t2 - t1);
         elapsed += t2 - t1;
     }
     DUR_T total = elapsed / tries;
-
     duration<double, std::milli> total_ms = total;
     double ms = total_ms.count();
+    double avg_moves = (double) moves / tries;
 
-    std::cout << "solved in " << ms << " ms." << std::endl;
+    std::cout << "avg/x -- time: " << ms << " ms. ; moves: " << avg_moves << std::endl;
 }
 
 //-----------------------------------------------------------------------
@@ -286,11 +314,10 @@ int main() {
     Board b2(b);
     initPagoda77(b2);
 
+    cout << "solving naive" << endl;
     benchmark(b);
-    cout << b << endl;
-
+    cout << "solving pagoda" << endl;
     benchmark(b2);
-    cout << b2 << endl;
 
     return 0;
 }
