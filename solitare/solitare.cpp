@@ -48,6 +48,10 @@ public:
         _pins = o._pins;
     }
 
+    virtual ~Board() {
+        delete[] _arr;
+    }
+
     [[nodiscard]] bool solved() const {
         return _pins == 1 && isSet(_lastPin.first, _lastPin.second);
     }
@@ -233,7 +237,7 @@ bool solve(Board &b) {
     return false;
 }
 
-void initPagoda77(Board &b) {
+short *pagoda77() {
     const int size = 7;
     auto *pagoda1 = new short[size * size]{
             0, 0, -1, 0, -1, 0, 0,
@@ -244,7 +248,7 @@ void initPagoda77(Board &b) {
             0, 0, 1, 1, 1, 0, 0,
             0, 0, -1, 0, -1, 0, 0
     };
-    b.addPagoda(pagoda1);
+    return pagoda1;
 }
 
 //-----------------------------------------------------------------------
@@ -312,12 +316,14 @@ int main() {
         }
     }
     Board b2(b);
-    initPagoda77(b2);
+    short *p1 = pagoda77();
+    b2.addPagoda(p1);
 
     cout << "solving naive" << endl;
     benchmark(b);
     cout << "solving pagoda" << endl;
     benchmark(b2);
 
+    delete[] p1;
     return 0;
 }
