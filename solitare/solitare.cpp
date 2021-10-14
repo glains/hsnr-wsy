@@ -3,6 +3,7 @@
 #include <vector>
 #include <stack>
 #include <iostream>
+#include <chrono>
 
 using namespace std;
 
@@ -27,15 +28,20 @@ public:
     const int _n;
     const int _size;
     char *_arr;
+    vector<short *> _ptables;
     const pair<short, short> _lastPin;
+    const int _lastPinIdx;
     int _pins = 0;
     stack<Move> _hist;
 
-    explicit Board(int n, const pair<short, short> lastPin) : _n(n), _size(n * n), _lastPin(lastPin) {
+    explicit Board(int n, const pair<short, short> lastPin) :
+            _n(n), _size(n * n), _lastPin(lastPin),
+            _lastPinIdx(idx(lastPin.first, lastPin.second)) {
         _arr = new char[_size];
     }
 
-    Board(const Board &o) : _n(o._n), _size(o._size), _lastPin(o._lastPin) {
+    Board(const Board &o) :
+            _n(o._n), _size(o._size), _lastPin(o._lastPin), _lastPinIdx(o._lastPinIdx) {
         _arr = new char[_size];
         std::copy(o._arr, o._arr + _size, _arr);
         _pins = o._pins;
@@ -48,6 +54,10 @@ public:
     void set(int row, int col, char val) {
         _arr[row * _n + col] = val;
         if (val == SET) _pins++;
+    }
+
+    [[nodiscard]] inline int idx(int row, int col) const {
+        return row * _n + col;
     }
 
     [[nodiscard]] inline char &at(int row, int col) const {
@@ -155,6 +165,25 @@ public:
         }
         return res;
     }
+
+    [[nodiscard]] bool solvable() const {
+        for (const auto &t: _ptables) {
+            int total = t[idx(_lastPin.first, _lastPin.second)];
+            for (int i = 0; i < _size; ++i) {
+                if (_arr[i] == SET) {
+                    total += t[i];
+                }
+            }
+            if (total < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void addPagoda(short *arr) {
+        _ptables.push_back(arr);
+    }
 };
 
 std::ostream &operator<<(std::ostream &os, const Board &b) {
@@ -167,9 +196,14 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
     return os;
 }
 
-bool solve_naive(Board b) {
+//-----------------------------------------------------------------------
+
+bool solve(Board &b) {
     if (b.solved()) {
         return true;
+    }
+    if (!b.solvable()) {
+        return false;
     }
     vector<Move> moves = b.moves();
     if (moves.empty()) {
@@ -177,15 +211,60 @@ bool solve_naive(Board b) {
     }
     for (const auto &m: moves) {
         b.move(m);
-        // cout << b << endl;
-        if (solve_naive(b)) {
+        if (solve(b)) {
             return true;
         }
         b.rewind();
-        // cout << b << endl;
     }
     return false;
 }
+
+void initPagoda77(Board &b) {
+    const int size = 7;
+    auto *pagoda1 = new short[size * size]{
+            0, 0, -1, 0, -1, 0, 0,
+            0, 0, 1, 1, 1, 0, 0,
+            -1, 1, 0, 1, 0, 1, -1,
+            0, 1, 1, 2, 1, 1, 0,
+            -1, 1, 0, 1, 0, 1, -1,
+            0, 0, 1, 1, 1, 0, 0,
+            0, 0, -1, 0, -1, 0, 0
+    };
+    b.addPagoda(pagoda1);
+}
+
+//-----------------------------------------------------------------------
+
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+using std::chrono::milliseconds;
+
+#define DUR_T duration<long long int, std::nano>
+
+void benchmark(Board &b) {
+    const int tries = 10000;
+    DUR_T elapsed = high_resolution_clock::duration::zero();
+    for (int i = 0; i < tries; ++i) {
+
+        auto t1 = high_resolution_clock::now();
+        if (!solve(b)) {
+            throw logic_error("not solved");
+        }
+        auto t2 = high_resolution_clock::now();
+
+        auto ms_int = duration_cast<milliseconds>(t2 - t1);
+        elapsed += t2 - t1;
+    }
+    DUR_T total = elapsed / tries;
+
+    duration<double, std::milli> total_ms = total;
+    double ms = total_ms.count();
+
+    std::cout << "solved in " << ms << " ms." << std::endl;
+}
+
+//-----------------------------------------------------------------------
 
 int main() {
     const int size = 7;
@@ -204,10 +283,14 @@ int main() {
             b.set(r, c, proto[r][c]);
         }
     }
+    Board b2(b);
+    initPagoda77(b2);
 
-    if (solve_naive(b)) {
-        cout << "solved" << endl;
-    } else {
-        cout << "cannot solve" << endl;
-    }
+    benchmark(b);
+    cout << b << endl;
+
+    benchmark(b2);
+    cout << b2 << endl;
+
+    return 0;
 }
