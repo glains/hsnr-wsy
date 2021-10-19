@@ -33,7 +33,8 @@ public:
     const pair<short, short> _lastPin;
     const int _lastPinIdx;
     int _pins = 0;
-    stack<Move> _hist;
+    stack <Move> _hist;
+    int _steps = 0;
 
     explicit Board(int n, const pair<short, short> lastPin) :
             _n(n), _size(n * n), _lastPin(lastPin),
@@ -42,7 +43,8 @@ public:
     }
 
     Board(const Board &o) :
-            _n(o._n), _size(o._size), _lastPin(o._lastPin), _lastPinIdx(o._lastPinIdx) {
+            _n(o._n), _size(o._size), _lastPin(o._lastPin), _lastPinIdx(o._lastPinIdx),
+            _ptables(o._ptables) {
         _arr = new char[_size];
         std::copy(o._arr, o._arr + _size, _arr);
         _pins = o._pins;
@@ -118,6 +120,7 @@ public:
                 break;
         }
         _pins--;
+        _steps++;
         _hist.push(move);
     }
 
@@ -173,17 +176,22 @@ public:
 
     [[nodiscard]] bool solvable() const {
         for (const auto &t: _ptables) {
-            int total = t[idx(_lastPin.first, _lastPin.second)];
+            int total = 0;
             for (int i = 0; i < _size; ++i) {
                 if (_arr[i] == SET) {
                     total += t[i];
                 }
             }
-            if (total < 0) {
+            int min = t[idx(_lastPin.first, _lastPin.second)];
+            if (total < min) {
                 return false;
             }
         }
         return true;
+    }
+
+    [[nodiscard]] int steps() const {
+        return _steps;
     }
 
     void addPagoda(short *arr) {
@@ -192,7 +200,7 @@ public:
 
     [[nodiscard]] vector<Move> history() const {
         size_t n = _hist.size();
-        stack<Move> hist(_hist);
+        stack <Move> hist(_hist);
 
         vector<Move> res;
         for (size_t i = 0; i < n; ++i) {
@@ -272,6 +280,8 @@ void benchmark(Board &b) {
     }
 
     size_t moves = 0;
+    size_t steps = 0;
+
     DUR_T elapsed = high_resolution_clock::duration::zero();
     for (int i = 0; i < tries; ++i) {
 
@@ -284,6 +294,7 @@ void benchmark(Board &b) {
 
         vector<Move> hist = tmp.history();
         moves += hist.size();
+        steps += tmp.steps();
 
         auto ms_int = duration_cast<milliseconds>(t2 - t1);
         elapsed += t2 - t1;
@@ -292,8 +303,10 @@ void benchmark(Board &b) {
     duration<double, std::milli> total_ms = total;
     double ms = total_ms.count();
     double avg_moves = (double) moves / tries;
+    double avg_steps = (double) steps / tries;
 
     std::cout << "avg/x -- time: " << ms << " ms. ; moves: " << avg_moves << std::endl;
+    std::cout << "avg/x -- steps: " << avg_steps << std::endl;
 }
 
 //-----------------------------------------------------------------------
