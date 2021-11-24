@@ -35,7 +35,7 @@ void test() {
 }
 
 int main() {
-    ull l1 = 0b100100;
+    ull l1 = 0b000100;
     ull l2 = 0b000011;
     Board b2(l1, l2);
     cout << b2.testScore() << endl;

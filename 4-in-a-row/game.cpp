@@ -188,7 +188,6 @@ inline int Board::ab_score() const {
     if (won(lastCol)) {
         return (&_mves0 == _plyr) ? 5000 : -5000;
     }
-    ull all = t | t2;
 
     // compute the global maximum coverage score
     // for each spot of 4 pins (row, col, dia)
@@ -196,18 +195,17 @@ inline int Board::ab_score() const {
     //  - multiply z with amount of pins already occupied by p1
     //    - will be zero if no pin occupied
 
-    ull cov = t;
     // rows
 
     // cols
-    int local = 0;
+    ull cov = 0;
     for (int c = 0; c < COLS; ++c) {
         int shift = c * ROWS;
         auto col = (t >> shift);
         auto col2 = (t2 >> shift);
-        cov |= ((((col2 ^ R1) & R1) == R1) * ((col & R1) > 1) * (col ^ R1)) << shift;
-        cov |= ((((col2 ^ R2) & R2) == R2) * ((col & R2) > 1) * (col ^ R2)) << shift;
-        cov |= ((((col2 ^ R3) & R3) == R3) * ((col & R3) > 1) * (col ^ R3)) << shift;
+        cov |= (((col2 ^ R1) & R1) == R1) * ((col & R1) > 1) * (col & R1);
+        cov |= (((col2 ^ R2) & R2) == R2) * ((col & R2) > 1) * (col & R2);
+        cov |= (((col2 ^ R3) & R3) == R3) * ((col & R3) > 1) * (col & R3);
     }
 
     // diag
