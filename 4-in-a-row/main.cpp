@@ -13,37 +13,16 @@ using std::chrono::milliseconds;
 
 #define DUR_T duration<long long int, std::nano>
 
-int main() {
-
-    ull l2 = 0b000001000001000001000001000001000001000001;
-    Board b(l2, l2);
-
-    //cout << b << endl;
-
-    ull l1 = 0b001011000001000001000001000001000001000001;
-    Board b2(l1, l1);
-
-    ull l3 = 0b001111000001000001000001000001000001000001;
-    Board b3(l3, l3);
-    //cout << b3.won() << endl;
-
-    ull l4 = 0b1000000100000010000001;
-    ull l5 = 0b000000000000000000010000001000000100000010;
-    ull m5 = 0b100000010000001000000100000000000000000000;
-    ull l6 = 0b000000000000000000100000010000001000000100;
-
-    Board b4(l4, l4);
-    Board b5(l5, l5);
-    Board b6(l6, l6);
-    //cout << b4.won() << endl;
-    //cout << b5.won() << endl;
-    //cout << b6.won() << endl;
-
+void test() {
     DUR_T elapsed = high_resolution_clock::duration::zero();
 
+    ull l1 = 0x07;
+    ull l2 = 0b100110;
+    Board b2(l2, 0x0);
+
     auto t1 = high_resolution_clock::now();
-    for (int t = 0; t < 100000000; ++t) {
-        b5.won();
+    for (int t = 0; t < 1000000000; ++t) {
+        b2.testScore();
     }
     auto t2 = high_resolution_clock::now();
 
@@ -53,12 +32,8 @@ int main() {
     duration<double, std::milli> total_ms = elapsed;
     double ms = total_ms.count();
     cout << "took " << ms << " ms" << endl;
+}
 
-    /*
-    auto moves = b.nextMoves();
-    for (const auto &m: moves) {
-        cout << m << endl;
-    }
-    */
-
+int main() {
+    test();
 }

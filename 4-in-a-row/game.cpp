@@ -1,6 +1,5 @@
 #include "game.h"
 
-#include <set>
 #include <iostream>
 
 using namespace std;
@@ -23,7 +22,8 @@ const array<ull, Board::ROWS> ROW_AND = {
         0x20820820820
 };
 
-const ull DIAG_MASK = 0x204081;
+const ull DIA_MASK = 0x204081;
+const ull ROW_MASK = 0x01041041041;
 
 const array<ull, Board::ROWS> DIA_AND = {
         0b00000000000000000000000100000010000001000000100,
@@ -33,44 +33,6 @@ const array<ull, Board::ROWS> DIA_AND = {
         0b01000000100000010000001000000100000000000000000,
         0b00100000010000001000000100000000000000000000000,
 };
-
-array<ull, Board::ROWS> setupMagicRowBits() noexcept {
-    array<ull, Board::ROWS> res{};
-    auto base = bitset<Board::N>(0x1).to_ullong();
-    for (int r = 0; r < Board::ROWS; ++r) {
-        auto cur = base, magic = base;
-        for (int i = 0; i < Board::COLS; ++i) {
-            cur <<= Board::COLS;
-            magic += cur;
-        }
-        bitset<Board::N> ts(cur);
-        //cout << ts;
-        res[r] = magic;
-        base <<= 1;
-    }
-
-    return res;
-}
-
-array<ull, Board::ROWS> ROW_MAG = setupMagicRowBits();
-
-array<ull, Board::COLS> setupMagicDiaBits() noexcept {
-    array<ull, Board::COLS> res{};
-    auto base = bitset<Board::N>(0x1 << (Board::N - 3 * 7)).to_ullong();
-    for (int c = 0; c < 1; ++c) {
-        auto cur = base, magic = base;
-        for (int i = 0; i < 3; ++i) {
-            cur <<= 7; // diag-distance
-            magic += cur;
-        }
-        res[c] = magic;
-        base <<= 1;
-    }
-
-    return res;
-}
-
-array<ull, Board::COLS> DIA_MAG = setupMagicDiaBits();
 
 //-----------------------------------------------------------------------
 
@@ -98,49 +60,154 @@ vector<Board> Board::nextMoves() const {
     return res;
 }
 
-bool Board::won() {
+bool Board::won() const {
+    bool win = false;
     const ull t = _plyr ? _mves1 : _mves0;
-    // rows
-    for (int r = 0; r < ROWS; ++r) {
-        ull row = (t & ROW_AND[r]) * ROW_MAG[r] >> (N - ROWS);
-        if ((row & R1) == R1 ||
-            (row & R2) == R2 ||
-            (row & R3) == R3)
-            return true;
-    }
 
-    if (_nmves < 8) {
-        return false; // min num to win rows
+    // rows
+    const int maxRow = 5;
+    for (int r = 0; r < maxRow; ++r) {
+        ull row = (t & ROW_AND[r]);
+        win |= (row & R1) == R1 ||
+               (row & R2) == R2 ||
+               (row & R3) == R3;
     }
+    if (win) return true;
+
     // cols
     for (int c = 0; c < COLS; ++c) {
-        if (_h[c] < 4) continue; // minimum win at height 4
         auto col = (t >> (c * ROWS));
-        if ((col & R1) == R1 ||
-            (col & R2) == R2 ||
-            (col & R3) == R3)
-            return true;
+        win |= (col & R1) == R1 ||
+               (col & R2) == R2 ||
+               (col & R3) == R3;
     }
+    if (win) return true;
 
+    /*
     // diag
     if (_nmves < 10) {
         return false; // min num to win diag
     }
 
-    /*
     // left bottom to right top column
     const int maxDiag = 5;
     for (int c = 0; c < maxDiag; ++c) {
         if (_h[c + 3] < 4) continue;
         const int off = ROWS * c;
         // left bottom to right top, length 4
-        if ((t >> (0 + off) & DIAG_MASK) == DIAG_MASK ||
-            (t >> (1 + off) & DIAG_MASK) == DIAG_MASK ||
-            (t >> (2 + off) & DIAG_MASK) == DIAG_MASK) {
+        if ((t >> (0 + off) & DIA_MASK) == DIA_MASK ||
+            (t >> (1 + off) & DIA_MASK) == DIA_MASK ||
+            (t >> (2 + off) & DIA_MASK) == DIA_MASK) {
             return true;
         }
     }
-     */
-
+    */
     return false;
+}
+
+bool Board::won(int lastCol) const {
+    ull t = *_plyr;
+    bool win = false;
+    // rows
+    ull row = (t & ROW_AND[_h[lastCol]]);
+    win |= (row & R1) == R1 ||
+           (row & R2) == R2 ||
+           (row & R3) == R3;
+    if (win) return true;
+
+    // cols
+    ull col = (t >> (lastCol * ROWS));
+    win |= (col & R1) == R1 ||
+           (col & R2) == R2 ||
+           (col & R3) == R3;
+    if (win) return true;
+
+    const int off = ROWS * lastCol;
+    // left bottom to right top, length 4
+    win |= (t >> (0 + off) & DIA_MASK) == DIA_MASK ||
+           (t >> (1 + off) & DIA_MASK) == DIA_MASK ||
+           (t >> (2 + off) & DIA_MASK) == DIA_MASK;
+
+    if (win) return true;
+    return false;
+}
+
+int Board::move() const {
+    return 0;
+}
+
+Board Board::move(int col) const {
+    return *this;
+}
+
+//-----------------------------------------------------------------------
+// Alpha-Beta-Pruning
+
+inline int Board::ab_max(int depth, int a, int b) const {
+    if (depth == 0 || _nmves == N) {
+        return ab_score();
+    }
+    int max = a;
+    vector<Board> moves = nextMoves();
+    for (auto &m: moves) {
+        int val = m.ab_min(depth - 1, max, b);
+        if (val > max) {
+            max = val;
+            if (max >= b) break; // cutoff
+        }
+    }
+    return max;
+}
+
+inline int Board::ab_min(int depth, int a, int b) const {
+    if (depth == 0 || _nmves == N) {
+        return ab_score();
+    }
+    int min = b;
+    vector<Board> moves = nextMoves();
+    for (auto &m: moves) {
+        int val = m.ab_max(depth - 1, a, min);
+        if (val < min) {
+            min = val;
+            if (min <= a) break; // cutoff
+        }
+    }
+    return min;
+}
+
+int Board::testScore() {
+    return ab_score();
+}
+
+inline int Board::ab_score() const {
+    ull t = *_plyr;
+    ull t2 = (&_mves0 == _plyr) ? _mves1 : _mves0;
+    int lastCol = lastMove();
+    if (won(lastCol)) {
+        return (&_mves0 == _plyr) ? 5000 : -5000;
+    }
+
+    // compute the global maximum coverage score
+    // for each spot of 4 pins (row, col, dia)
+    //  - compute positive z if all pins not taken by p2, else 0
+    //  - multiply z with amount of pins already occupied by p1
+    //    - will be zero if no pin occupied
+
+    ull cover = 0;
+    // rows
+
+    // cols
+    int local = 0;
+    for (int c = 0; c < COLS; ++c) {
+        auto col = (t >> (c * ROWS));
+        auto col2 = (t2 >> (c * ROWS));
+        // shift to be 0 or 1
+        cover += (((col2 ^ R1) & R1) >> 3) * ((col & R1));
+        cover += (((col2 ^ R2) & R2) >> 4) * ((col & R2)) >> 1;
+        cover += (((col2 ^ R3) & R3) >> 5) * ((col & R3)) >> 2;
+    }
+
+    // diag
+
+    return (int) local;
 }

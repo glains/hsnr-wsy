@@ -20,16 +20,16 @@ public:
         _nmves = 0;
         _mves0 = 0;
         _mves1 = 0;
-        _plyr = true;
-        _h = {4, 4, 4, 4, 4, 4, 4};
+        _plyr = &_mves0;
+        _h = {4, 4, 4, 4, 4, 4, 4, 3};
     }
 
     Board(ull mves0, ull mves1) {
         _nmves = 12;
         _mves0 = mves0;
         _mves1 = mves1;
-        _plyr = true;
-        _h = {4, 4, 4, 4, 4, 4, 4};
+        _plyr = &_mves0;
+        _h = {4, 4, 4, 4, 4, 4, 4, 3};
     }
 
     Board(const Board &b) {
@@ -40,29 +40,32 @@ public:
         _h = b._h; // TODO: copy
     }
 
-    [[nodiscard]]
-    inline std::bitset<N> moves() const {
-        return _mves0;
-    }
-
-    [[nodiscard]]
-    inline std::bitset<N> mask() const {
-        return _mves1;
-    }
-
     //-----------------------------------------------------------------------
 
     [[nodiscard]]
-    inline std::vector<Board> nextMoves() const;
+    int move() const;
 
-    bool won();
+    [[nodiscard]]
+    Board move(int col) const;
+
+    [[nodiscard]]
+    inline int lastMove() const {
+        return _h[COLS];
+    }
+
+    [[nodiscard]]
+    bool won() const;
+
+    int testScore();
 
     //-----------------------------------------------------------------------
 
+    /*
     friend std::ostream &operator<<(std::ostream &os, const Board &b) {
         return os << "moves: " << b.moves() << std::endl
                   << "mask : " << b.mask();
     }
+    */
 
 private:
     // total amount of moves made
@@ -71,11 +74,31 @@ private:
     // generate moves
     ull _mves0;
     ull _mves1;
-    bool _plyr;
+    ull *_plyr;
     // height of cols
-    std::array<short, COLS> _h;
+    std::array<short, COLS + 1> _h;
 
     //-----------------------------------------------------------------------
+
+    [[nodiscard]]
+    inline std::vector<Board> nextMoves() const;
+
+    /**
+     * Validates if the current contains a winning position.
+     *
+     * @param lastCol the last column a move has been made
+     * @return true if the current player has 4-in-a-row
+     */
+    inline bool won(int lastCol) const;
+
+    [[nodiscard]]
+    int ab_max(int depth, int a, int b) const;
+
+    [[nodiscard]]
+    int ab_min(int depth, int a, int b) const;
+
+    [[nodiscard]]
+    int ab_score() const;
 
 };
 
