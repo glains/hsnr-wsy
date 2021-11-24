@@ -5,6 +5,7 @@
 #include <iostream>
 #include <chrono>
 #include <algorithm>
+#include <set>
 
 using namespace std;
 
@@ -34,6 +35,7 @@ public:
     const int _lastPinIdx;
     int _pins = 0;
     stack <Move> _hist;
+    set<long> _cache;
     int _steps = 0;
 
     explicit Board(int n, const pair<short, short> lastPin) :
@@ -224,6 +226,17 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
 
 //-----------------------------------------------------------------------
 
+long hashBoard(const Board &b) {
+    long long r = 0;
+    int shift = 0;
+    for (int i = 0; i < b._size; ++i) {
+        if (b._arr[i] == Board::SET) {
+            r |= 1 << shift++;
+        }
+    }
+    return r;
+}
+
 bool solve(Board &b) {
     if (b.solved()) {
         return true;
@@ -236,10 +249,15 @@ bool solve(Board &b) {
         return false;
     }
     for (const auto &m: moves) {
+        //auto cl = b._cache.find(hashBoard(b));
+        //if (cl != b._cache.end()) {
+        //    continue;
+        //}
         b.move(m);
         if (solve(b)) {
             return true;
         }
+        b._cache.insert(hashBoard(b));
         b.rewind();
     }
     return false;
@@ -316,13 +334,13 @@ int main() {
     char proto[size][size] = {
             {'x', 'x', '1', '1', '1', 'x', 'x'},
             {'x', 'x', '1', '1', '1', 'x', 'x'},
-            {'1', '1', '1', '1', '1', '1', '1'},
             {'1', '1', '1', '0', '1', '1', '1'},
+            {'1', '1', '1', '1', '1', '1', '1'},
             {'1', '1', '1', '1', '1', '1', '1'},
             {'x', 'x', '1', '1', '1', 'x', 'x'},
             {'x', 'x', '1', '1', '1', 'x', 'x'}
     };
-    Board b(size, pair<short, short>(3, 3));
+    Board b(size, pair<short, short>(2, 3));
     for (int r = 0; r < size; ++r) {
         for (int c = 0; c < size; ++c) {
             b.set(r, c, proto[r][c]);
