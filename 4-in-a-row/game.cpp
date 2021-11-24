@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#define OUT_BIT(long) (cout << bitset<N>(long) << endl);
+
 using namespace std;
 
 typedef unsigned long long ull;
@@ -186,6 +188,7 @@ inline int Board::ab_score() const {
     if (won(lastCol)) {
         return (&_mves0 == _plyr) ? 5000 : -5000;
     }
+    ull all = t | t2;
 
     // compute the global maximum coverage score
     // for each spot of 4 pins (row, col, dia)
@@ -193,21 +196,21 @@ inline int Board::ab_score() const {
     //  - multiply z with amount of pins already occupied by p1
     //    - will be zero if no pin occupied
 
-    ull cover = 0;
+    ull cov = t;
     // rows
 
     // cols
     int local = 0;
     for (int c = 0; c < COLS; ++c) {
-        auto col = (t >> (c * ROWS));
-        auto col2 = (t2 >> (c * ROWS));
-        // shift to be 0 or 1
-        cover += (((col2 ^ R1) & R1) >> 3) * ((col & R1));
-        cover += (((col2 ^ R2) & R2) >> 4) * ((col & R2)) >> 1;
-        cover += (((col2 ^ R3) & R3) >> 5) * ((col & R3)) >> 2;
+        int shift = c * ROWS;
+        auto col = (t >> shift);
+        auto col2 = (t2 >> shift);
+        cov |= ((((col2 ^ R1) & R1) == R1) * ((col & R1) > 1) * (col ^ R1)) << shift;
+        cov |= ((((col2 ^ R2) & R2) == R2) * ((col & R2) > 1) * (col ^ R2)) << shift;
+        cov |= ((((col2 ^ R3) & R3) == R3) * ((col & R3) > 1) * (col ^ R3)) << shift;
     }
 
     // diag
 
-    return (int) local;
+    return (int) bitset<N>(cov).count();
 }

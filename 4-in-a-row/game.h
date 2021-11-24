@@ -89,6 +89,7 @@ private:
      * @param lastCol the last column a move has been made
      * @return true if the current player has 4-in-a-row
      */
+    [[nodiscard]]
     inline bool won(int lastCol) const;
 
     [[nodiscard]]
