@@ -5,6 +5,7 @@
 
 #define DEBUG
 #undef  DEBUG
+
 #define OUT_BIT(long) (cout << bitset<N>(long) << endl);
 
 using namespace std;
@@ -286,16 +287,29 @@ inline int Board::scorePlyr(bool plyr) const {
     //  - multiply z with amount of pins already occupied by p1
     //    - will be zero if no pin occupied
     ull cov = 0;
+    ull covSin = 0;
 
     // rows
     for (int row = 0; row < ROWS; ++row) {
         int shift = row;
         ull row1 = (t1 >> shift);
         ull row2 = (t2 >> shift);
-        cov |= ((row2 & R1) == 0) * ((row1 & R1) > 1) * (row1 | R1);
-        cov |= ((row2 & R2) == 0) * ((row1 & R2) > 1) * (row1 | R2);
-        cov |= ((row2 & R3) == 0) * ((row1 & R3) > 1) * (row1 | R3);
-        cov |= ((row2 & R4) == 0) * ((row1 & R4) > 1) * (row1 | R4);
+
+        bool m1 = ((row2 & R1) == 0) * ((row1 & R1) > 0);
+        cov |= (m1 * R1) << shift;
+        covSin += bitset<N>(m1 * (row1 & R1)).count(); // TODO: optimize
+
+        bool m2 = ((row2 & R2) == 0) * ((row1 & R2) > 0);
+        cov |= (m2 * R2) << shift;
+        covSin += bitset<N>(m2 * (row1 & R2)).count(); // TODO: optimize
+
+        bool m3 = ((row2 & R3) == 0) * ((row1 & R3) > 0);
+        cov |= (m3 * R3) << shift;
+        covSin += bitset<N>(m3 * (row1 & R3)).count(); // TODO: optimize
+
+        bool m4 = ((row2 & R4) == 0) * ((row1 & R4) > 0);
+        cov |= (m4 * (row1 | R4)) << shift;
+        covSin += bitset<N>(m4 * (row1 & R4)).count(); // TODO: optimize
     }
 
     // cols
@@ -303,12 +317,24 @@ inline int Board::scorePlyr(bool plyr) const {
         int shift = col * ROWS;
         auto col1 = (t1 >> shift);
         auto col2 = (t2 >> shift);
-        cov |= ((col2 & C1) == 0) * ((col1 & C1) > 1) * (col1 | C1);
-        cov |= ((col2 & C2) == 0) * ((col1 & C2) > 1) * (col1 | C2);
-        cov |= ((col2 & C3) == 0) * ((col1 & C3) > 1) * (col1 | C3);
+
+        bool m1 = ((col2 & C1) == 0) * ((col1 & C1) > 0);
+        cov |= (m1 * C1) << shift;
+        covSin += bitset<N>(m1 * (col1 & C1)).count(); // TODO: optimize
+
+        bool m2 = ((col2 & C2) == 0) * ((col1 & C2) > 0);
+        cov |= (m2 * C2) << shift;
+        covSin += bitset<N>(m2 * (col1 & C2)).count(); // TODO: optimize
+
+        bool m3 = ((col2 & C3) == 0) * ((col1 & C3) > 0);
+        cov |= (m3 * C3) << shift;
+        covSin += bitset<N>(m3 * (col1 & C3)).count(); // TODO: optimize
     }
 
     // diag
 
-    return (int) bitset<N>(cov).count(); // optimize with raw count from <bits>
+    //cout << *this << endl;
+    //cout << bits_to_string(cov) << endl;
+
+    return (int) (bitset<N>(cov).count() + covSin * 2); // TODO: optimize
 }

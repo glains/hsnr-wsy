@@ -79,6 +79,20 @@ public:
         return os;
     }
 
+    [[nodiscard]]
+    static std::string bits_to_string(ull bits) {
+        std::stringstream ss;
+        auto p1 = std::bitset<N>(bits);
+        for (int r = ROWS - 1; r >= 0; --r) {
+            for (int c = 0; c < COLS; ++c) {
+                char ch = p1[c * ROWS + r] ? 'x' : '-';
+                ss << ch;
+            }
+            ss << std::endl;
+        }
+        return ss.str();
+    }
+
 private:
     // total amount of moves made
     int _nmves;

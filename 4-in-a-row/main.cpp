@@ -79,7 +79,7 @@ void playSimple() {
             int col = getNextMove();
             b = b.move(col);
         } else {
-            auto move = b.search(12);
+            auto move = b.search(8);
             b = b.move(move.col);
         }
 
