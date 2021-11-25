@@ -34,10 +34,65 @@ void test() {
     cout << "took " << ms << " ms" << endl;
 }
 
-int main() {
-    ull l1 = 0b000100;
-    ull l2 = 0b000011;
+void testCol() {
+    ull l1 = 0b011100;
+    ull l2 = 0b100010;
     Board b2(l1, l2);
-    cout << b2.testScore() << endl;
-    // test();
+    cout << "col: " << b2.testScore() << endl;
+}
+
+void testRow() {
+    ull l1 = 0b100000010000000000000;
+    ull l2 = 0b01001111;
+    Board b2(l1, l2);
+    cout << b2 << endl;
+}
+
+void testMove() {
+    ull l1 = 0b0111000000;
+    ull l2 = 0b0000000001;
+    Board b2(l1, l2);
+    auto move = b2.search(10);
+    cout << b2 << endl;
+    cout << b2.move(move.col) << endl;
+}
+
+void testMove2() {
+    ull l1 = 0b0000000000;
+    ull l2 = 0b0000000000;
+    Board b2(l1, l2);
+    //auto move = b2.search(10);
+    cout << b2.move(0).move(1).move(2).move(3).move(4).move(5) << endl;
+}
+
+int getNextMove() {
+    string line;
+    getline(cin, line);
+    return stoi(line);
+}
+
+void playSimple() {
+    bool ownTurn = true;
+    Board b;
+    while (!b.won()) {
+        if (ownTurn) {
+            int col = getNextMove();
+            b = b.move(col);
+        } else {
+            auto move = b.search(12);
+            b = b.move(move.col);
+        }
+
+        cout << b << endl;
+
+        ownTurn = !ownTurn;
+    }
+}
+
+int main() {
+    //testCol();
+    //testRow();
+    //testMove2();
+    //test();
+    playSimple();
 }

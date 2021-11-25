@@ -7,8 +7,14 @@
 #include <array>
 #include <ostream>
 #include <sstream>
+#include <iostream>
 
 typedef unsigned long long ull;
+
+struct Move {
+    int col;
+    int score;
+};
 
 class Board {
 public:
@@ -16,34 +22,34 @@ public:
     constexpr const static int COLS = 7;
     constexpr const static int N = ROWS * COLS;
 
-    Board() {
+    Board() : _mves0(0), _mves1(0) {
         _nmves = 0;
-        _mves0 = 0;
-        _mves1 = 0;
-        _plyr = &_mves0;
-        _h = {4, 4, 4, 4, 4, 4, 4, 3};
+        _toMove = true;
+        _h = {};
     }
 
-    Board(ull mves0, ull mves1) {
+    Board(ull mves0, ull mves1) : _mves0(mves0), _mves1(mves1) {
         _nmves = 12;
-        _mves0 = mves0;
-        _mves1 = mves1;
-        _plyr = &_mves0;
-        _h = {4, 4, 4, 4, 4, 4, 4, 3};
+        _toMove = true;
+        _h = {};
+        for (int col = 0; col < COLS; ++col) {
+            _h[col] = colRnk(col);
+        }
     }
 
-    Board(const Board &b) {
+    Board(const Board &b) : _mves0(b._mves0), _mves1(b._mves1) {
         _nmves = b._nmves;
-        _mves0 = b._mves0;
-        _mves1 = b._mves1;
-        _plyr = b._plyr;
+        _toMove = b._toMove;
         _h = b._h; // TODO: copy
     }
+
+    Board(int nmves, const ull mves0, const ull mves1, const bool toMove, const std::array<int, COLS + 1> &h) : _nmves(
+            nmves), _mves0(mves0), _mves1(mves1), _toMove(toMove), _h(h) {}
 
     //-----------------------------------------------------------------------
 
     [[nodiscard]]
-    int move() const;
+    Move search(int depth) const;
 
     [[nodiscard]]
     Board move(int col) const;
@@ -60,28 +66,38 @@ public:
 
     //-----------------------------------------------------------------------
 
-    /*
     friend std::ostream &operator<<(std::ostream &os, const Board &b) {
-        return os << "moves: " << b.moves() << std::endl
-                  << "mask : " << b.mask();
+        auto p1 = std::bitset<N>(b._mves0);
+        auto p2 = std::bitset<N>(b._mves1);
+        for (int r = ROWS - 1; r >= 0; --r) {
+            for (int c = 0; c < COLS; ++c) {
+                char ch = p1[c * ROWS + r] ? 'x' : (p2[c * ROWS + r] ? 'o' : '-');
+                os << ch;
+            }
+            os << std::endl;
+        }
+        return os;
     }
-    */
 
 private:
     // total amount of moves made
-    short _nmves;
+    int _nmves;
     // encoded by cols of size N, since its faster to
     // generate moves
     ull _mves0;
     ull _mves1;
-    ull *_plyr;
+    bool _toMove;
     // height of cols
-    std::array<short, COLS + 1> _h;
+    // last index stores last played column
+    std::array<int, COLS + 1> _h{};
 
     //-----------------------------------------------------------------------
 
     [[nodiscard]]
     inline std::vector<Board> nextMoves() const;
+
+    [[nodiscard]]
+    int colRnk(int idx) const;
 
     /**
      * Validates if the current contains a winning position.
@@ -93,14 +109,15 @@ private:
     inline bool won(int lastCol) const;
 
     [[nodiscard]]
-    int ab_max(int depth, int a, int b) const;
+    Move ab_max(int depth, int a, int b) const;
 
     [[nodiscard]]
-    int ab_min(int depth, int a, int b) const;
+    Move ab_min(int depth, int a, int b) const;
 
     [[nodiscard]]
     int ab_score() const;
 
+    int scorePlyr(bool plyr) const;
 };
 
 template<typename T>
