@@ -87,9 +87,12 @@ vector<Board> Board::nextMoves() const {
     return res;
 }
 
-bool Board::won() const {
+bool Board::end() const {
+    if (_nmves == N) {
+        return true;
+    }
     bool win = false;
-    // check if the other player (last move) has won
+    // check if the other player (last move) has end
     const ull t = _toMove ? _mves1 : _mves0;
 
     // rows
@@ -105,9 +108,9 @@ bool Board::won() const {
     // cols
     for (int c = 0; c < COLS; ++c) {
         auto col = (t >> (c * ROWS));
-        win |= (col & R1) == R1 ||
-               (col & R2) == R2 ||
-               (col & R3) == R3;
+        win |= (col & C1) == C1 ||
+               (col & C2) == C2 ||
+               (col & C3) == C3;
     }
     if (win) return true;
 
@@ -134,7 +137,7 @@ bool Board::won() const {
 }
 
 bool Board::won(int lastCol) const {
-    // check if the other player has won
+    // check if the other player has end
     ull t = _toMove ? _mves1 : _mves0;
     bool win = false;
     // rows
@@ -146,9 +149,9 @@ bool Board::won(int lastCol) const {
 
     // cols
     ull col = (t >> (lastCol * ROWS));
-    win |= (col & R1) == R1 ||
-           (col & R2) == R2 ||
-           (col & R3) == R3;
+    win |= (col & C1) == C1 ||
+           (col & C2) == C2 ||
+           (col & C3) == C3;
     if (win) return true;
 
     const int off = ROWS * lastCol;
@@ -167,7 +170,7 @@ Move Board::search(int depth) const {
 
 Board Board::move(int col) const {
     if (won(lastMove())) {
-        throw std::logic_error("already won");
+        throw std::logic_error("already end");
     }
     if (_toMove) {
         if (_h[col] < ROWS) {
@@ -261,8 +264,9 @@ int Board::testScore() {
 }
 
 inline int Board::ab_score() const {
-    return scorePlyr(true) - scorePlyr(false);
-
+    int s1 = scorePlyr(true);
+    int s2 = scorePlyr(false);
+    return s1 - s2;
 }
 
 inline int Board::scorePlyr(bool plyr) const {
@@ -297,19 +301,19 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((row2 & R1) == 0) * ((row1 & R1) > 0);
         cov |= (m1 * R1) << shift;
-        covSin += bitset<N>(m1 * (row1 & R1)).count(); // TODO: optimize
+        covSin += m1 * (bitset<N>(row1 & R1).count() + N); // TODO: optimize
 
         bool m2 = ((row2 & R2) == 0) * ((row1 & R2) > 0);
         cov |= (m2 * R2) << shift;
-        covSin += bitset<N>(m2 * (row1 & R2)).count(); // TODO: optimize
+        covSin += m2 * (bitset<N>(row1 & R2).count() + N); // TODO: optimize
 
         bool m3 = ((row2 & R3) == 0) * ((row1 & R3) > 0);
         cov |= (m3 * R3) << shift;
-        covSin += bitset<N>(m3 * (row1 & R3)).count(); // TODO: optimize
+        covSin += m3 * (bitset<N>(row1 & R3).count() + N); // TODO: optimize
 
         bool m4 = ((row2 & R4) == 0) * ((row1 & R4) > 0);
         cov |= (m4 * (row1 | R4)) << shift;
-        covSin += bitset<N>(m4 * (row1 & R4)).count(); // TODO: optimize
+        covSin += m4 * (bitset<N>(row1 & R4).count() + N); // TODO: optimize
     }
 
     // cols
@@ -320,21 +324,19 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((col2 & C1) == 0) * ((col1 & C1) > 0);
         cov |= (m1 * C1) << shift;
-        covSin += bitset<N>(m1 * (col1 & C1)).count(); // TODO: optimize
+        covSin += m1 * (bitset<N>(col1 & C1).count() + N); // TODO: optimize
 
         bool m2 = ((col2 & C2) == 0) * ((col1 & C2) > 0);
         cov |= (m2 * C2) << shift;
-        covSin += bitset<N>(m2 * (col1 & C2)).count(); // TODO: optimize
+        covSin += m2 * (bitset<N>(col1 & C2).count() + N); // TODO: optimize
 
         bool m3 = ((col2 & C3) == 0) * ((col1 & C3) > 0);
         cov |= (m3 * C3) << shift;
-        covSin += bitset<N>(m3 * (col1 & C3)).count(); // TODO: optimize
+        covSin += m3 * (bitset<N>(col1 & C3).count() + N); // TODO: optimize
     }
 
     // diag
 
-    //cout << *this << endl;
-    //cout << bits_to_string(cov) << endl;
-
-    return (int) (bitset<N>(cov).count() + covSin * 2); // TODO: optimize
+    size_t covGlobal = bitset<N>(cov).count();
+    return (int) (covGlobal + covSin); // TODO: optimize
 }

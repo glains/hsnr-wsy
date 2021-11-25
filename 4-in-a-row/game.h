@@ -60,7 +60,7 @@ public:
     }
 
     [[nodiscard]]
-    bool won() const;
+    bool end() const;
 
     int testScore();
 

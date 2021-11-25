@@ -60,9 +60,9 @@ void testMove() {
 void testMove2() {
     ull l1 = 0b0000000000;
     ull l2 = 0b0000000000;
-    Board b2(l1, l2);
+    Board b2(6439, 1752);
     //auto move = b2.search(10);
-    cout << b2.move(0).move(1).move(2).move(3).move(4).move(5) << endl;
+    cout << b2 << endl;
 }
 
 int getNextMove() {
@@ -74,12 +74,12 @@ int getNextMove() {
 void playSimple() {
     bool ownTurn = true;
     Board b;
-    while (!b.won()) {
+    while (!b.end()) {
         if (ownTurn) {
             int col = getNextMove();
             b = b.move(col);
         } else {
-            auto move = b.search(8);
+            auto move = b.search(11);
             b = b.move(move.col);
         }
 
