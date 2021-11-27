@@ -7,6 +7,7 @@
 #undef  DEBUG
 
 #define OUT_BIT(long) (cout << bitset<N>(long) << endl);
+#define BIT_CNT(l) (bitset<N>(l).count())
 
 using namespace std;
 
@@ -21,6 +22,8 @@ const ull R4 = 0x1041040000;
 const ull C1 = 0x0f;
 const ull C2 = 0x1e;
 const ull C3 = 0x3c;
+
+const int SCORE_WIN = 50000;
 
 const ull DM = 0x0204081ull;
 
@@ -55,27 +58,13 @@ int Board::colRnk(int idx) const {
 
 vector<Board> Board::nextMoves() const {
     vector<Board> res;
-    if (won(lastMove())) {
-        return res;
-    }
-
-    ull p1;
-    ull p2;
-    if (_toMove) {
-        p1 = _mves0;
-        p2 = _mves1;
-    } else {
-        p1 = _mves1;
-        p2 = _mves0;
-    }
-
     for (int col = 0; col < COLS; ++col) {
         if (_h[col] < ROWS) {
             int off = col * ROWS + _h[col];
             Board b(
                     _nmves + 1,
-                    p1 | (1ull << off),
-                    p2,
+                    _mves0 | (_toMove * (1ull << off)),
+                    _mves1 | (!_toMove * (1ull << off)),
                     !_toMove,
                     _h
             );
@@ -91,28 +80,7 @@ bool Board::end() const {
     if (_nmves == N) {
         return true;
     }
-    bool win = false;
-    // check if the other player (last move) has end
-    const ull t = _toMove ? _mves1 : _mves0;
-
-    // rows
-    const int maxRow = 5;
-    for (int r = 0; r < maxRow; ++r) {
-        ull row = (t & ROW_MSK[r]);
-        win |= (row & R1) == R1 ||
-               (row & R2) == R2 ||
-               (row & R3) == R3;
-    }
-    if (win) return true;
-
-    // cols
-    for (int c = 0; c < COLS; ++c) {
-        auto col = (t >> (c * ROWS));
-        win |= (col & C1) == C1 ||
-               (col & C2) == C2 ||
-               (col & C3) == C3;
-    }
-    if (win) return true;
+    return won(lastMove());
 
     /*
     // diag
@@ -141,10 +109,12 @@ bool Board::won(int lastCol) const {
     ull t = _toMove ? _mves1 : _mves0;
     bool win = false;
     // rows
-    ull row = (t & ROW_MSK[_h[lastCol]]);
+    int prevHeight = _h[lastCol] - 1;
+    ull row = ((t >> prevHeight) & ROW_MASK);
     win |= (row & R1) == R1 ||
            (row & R2) == R2 ||
-           (row & R3) == R3;
+           (row & R3) == R3 ||
+           (row & R4) == R4;
     if (win) return true;
 
     // cols
@@ -211,9 +181,17 @@ Board Board::move(int col) const {
 // Alpha-Beta-Pruning
 
 inline Move Board::ab_max(int depth, int a, int b) const {
-    if (depth == 0 || _nmves == N) {
+    if (depth == 0) {
+        if (won(lastMove())) {
+            return {.col=lastMove(), .score=-SCORE_WIN};
+        }
         return {.col=lastMove(), .score=ab_score()};
     }
+    // checking for a win here saves a call in #nextMoves and #score
+    if (won(lastMove())) {
+        return {.col=lastMove(), .score=-SCORE_WIN};
+    }
+
     vector<Board> moves = nextMoves();
     if (moves.empty()) {
         return {.col=lastMove(), .score=ab_score()};
@@ -233,9 +211,17 @@ inline Move Board::ab_max(int depth, int a, int b) const {
 }
 
 inline Move Board::ab_min(int depth, int a, int b) const {
-    if (depth == 0 || _nmves == N) {
+    if (depth == 0) {
+        if (won(lastMove())) {
+            return {.col=lastMove(), .score=SCORE_WIN};
+        }
         return {.col=lastMove(), .score=ab_score()};
     }
+    // checking for a win here saves a call in #nextMoves and #score
+    if (won(lastMove())) {
+        return {.col=lastMove(), .score=SCORE_WIN};
+    }
+
     vector<Board> moves = nextMoves();
     if (moves.empty()) {
         return {.col=lastMove(), .score=ab_score()};
@@ -280,18 +266,13 @@ inline int Board::scorePlyr(bool plyr) const {
         t2 = _mves0;
     }
 
-    int lastCol = lastMove();
-    if (won(lastCol)) {
-        return (_toMove) ? -5000 : 5000;
-    }
-
     // compute the global maximum coverage score
     // for each spot of 4 pins (row, col, dia)
     //  - compute positive z if all pins not taken by p2, else 0
     //  - multiply z with amount of pins already occupied by p1
     //    - will be zero if no pin occupied
     ull cov = 0;
-    ull covSin = 0;
+    ull fill = 0;
 
     // rows
     for (int row = 0; row < ROWS; ++row) {
@@ -301,19 +282,19 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((row2 & R1) == 0) * ((row1 & R1) > 0);
         cov |= (m1 * R1) << shift;
-        covSin += m1 * (bitset<N>(row1 & R1).count() + N); // TODO: optimize
+        fill += m1 * BIT_CNT(row1 & R1);
 
         bool m2 = ((row2 & R2) == 0) * ((row1 & R2) > 0);
         cov |= (m2 * R2) << shift;
-        covSin += m2 * (bitset<N>(row1 & R2).count() + N); // TODO: optimize
+        fill += m2 * BIT_CNT(row1 & R2);
 
         bool m3 = ((row2 & R3) == 0) * ((row1 & R3) > 0);
         cov |= (m3 * R3) << shift;
-        covSin += m3 * (bitset<N>(row1 & R3).count() + N); // TODO: optimize
+        fill += m3 * BIT_CNT(row1 & R3);
 
         bool m4 = ((row2 & R4) == 0) * ((row1 & R4) > 0);
         cov |= (m4 * (row1 | R4)) << shift;
-        covSin += m4 * (bitset<N>(row1 & R4).count() + N); // TODO: optimize
+        fill += m4 * BIT_CNT(row1 & R4);
     }
 
     // cols
@@ -324,19 +305,18 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((col2 & C1) == 0) * ((col1 & C1) > 0);
         cov |= (m1 * C1) << shift;
-        covSin += m1 * (bitset<N>(col1 & C1).count() + N); // TODO: optimize
+        fill += m1 * BIT_CNT(col1 & C1);
 
         bool m2 = ((col2 & C2) == 0) * ((col1 & C2) > 0);
         cov |= (m2 * C2) << shift;
-        covSin += m2 * (bitset<N>(col1 & C2).count() + N); // TODO: optimize
+        fill += m2 * BIT_CNT(col1 & C2);
 
         bool m3 = ((col2 & C3) == 0) * ((col1 & C3) > 0);
         cov |= (m3 * C3) << shift;
-        covSin += m3 * (bitset<N>(col1 & C3).count() + N); // TODO: optimize
+        fill += m3 * BIT_CNT(col1 & C3);
     }
 
     // diag
 
-    size_t covGlobal = bitset<N>(cov).count();
-    return (int) (covGlobal + covSin); // TODO: optimize
+    return (int) (BIT_CNT(cov) + fill);
 }

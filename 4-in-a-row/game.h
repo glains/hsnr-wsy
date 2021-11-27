@@ -48,10 +48,8 @@ public:
 
     //-----------------------------------------------------------------------
 
-    [[nodiscard]]
     Move search(int depth) const;
 
-    [[nodiscard]]
     Board move(int col) const;
 
     [[nodiscard]]
@@ -59,7 +57,6 @@ public:
         return _h[COLS];
     }
 
-    [[nodiscard]]
     bool end() const;
 
     int testScore();
@@ -79,7 +76,6 @@ public:
         return os;
     }
 
-    [[nodiscard]]
     static std::string bits_to_string(ull bits) {
         std::stringstream ss;
         auto p1 = std::bitset<N>(bits);
@@ -107,7 +103,6 @@ private:
 
     //-----------------------------------------------------------------------
 
-    [[nodiscard]]
     inline std::vector<Board> nextMoves() const;
 
     [[nodiscard]]
@@ -119,16 +114,12 @@ private:
      * @param lastCol the last column a move has been made
      * @return true if the current player has 4-in-a-row
      */
-    [[nodiscard]]
     inline bool won(int lastCol) const;
 
-    [[nodiscard]]
     Move ab_max(int depth, int a, int b) const;
 
-    [[nodiscard]]
     Move ab_min(int depth, int a, int b) const;
 
-    [[nodiscard]]
     int ab_score() const;
 
     int scorePlyr(bool plyr) const;
