@@ -124,12 +124,13 @@ bool Board::won(int lastCol) const {
            (col & C3) == C3;
     if (win) return true;
 
+    /*
     const int off = ROWS * lastCol;
     // left bottom to right top, length 4
     win |= (t >> (0 + off) & DIA_MASK) == DIA_MASK ||
            (t >> (1 + off) & DIA_MASK) == DIA_MASK ||
            (t >> (2 + off) & DIA_MASK) == DIA_MASK;
-
+    */
     if (win) return true;
     return false;
 }
