@@ -25,6 +25,11 @@ const ull C3 = 0x3c;
 
 const int SCORE_WIN = 50000;
 
+// assume that moves generated in the middle of the board have
+// the most impact on the game, therefore they should be
+// evaluated in that order
+const int COL_ORD[7] = {3, 2, 4, 1, 5, 0, 6};
+
 const ull DM = 0x0204081ull;
 
 const array<ull, Board::ROWS> ROW_MSK = {
@@ -58,7 +63,7 @@ int Board::colRnk(int idx) const {
 
 vector<Board> Board::nextMoves() const {
     vector<Board> res;
-    for (int col = 0; col < COLS; ++col) {
+    for (int col : COL_ORD) {
         if (_h[col] < ROWS) {
             int off = col * ROWS + _h[col];
             Board b(
