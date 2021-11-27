@@ -23,6 +23,8 @@ const ull C1 = 0x0f;
 const ull C2 = 0x1e;
 const ull C3 = 0x3c;
 
+const int SCORE_2 = 2;
+const int SCORE_3 = 4;
 const int SCORE_WIN = 50000;
 
 // assume that moves generated in the middle of the board have
@@ -32,7 +34,7 @@ const int COL_ORD[7] = {3, 2, 4, 1, 5, 0, 6};
 
 const ull DM = 0x0204081ull;
 
-const array<ull, Board::ROWS> ROW_MSK = {
+const array <ull, Board::ROWS> ROW_MSK = {
         0x01041041041,
         0x02082082082,
         0x04104104104,
@@ -45,7 +47,7 @@ const ull DIA_MASK = 0x204081;
 const ull ROW_MASK = 0x01041041041;
 const ull COL1_MASK = 0x3f;
 
-const array<ull, Board::ROWS> DIA_AND = {
+const array <ull, Board::ROWS> DIA_AND = {
         0b00000000000000000000000100000010000001000000100,
         0b00000000000000000100000010000001000000100000010,
         0b00000000000100000010000001000000100000010000001,
@@ -61,9 +63,9 @@ int Board::colRnk(int idx) const {
     return (int) bitset<N>(col & COL1_MASK).count();
 }
 
-vector<Board> Board::nextMoves() const {
-    vector<Board> res;
-    for (int col : COL_ORD) {
+vector <Board> Board::nextMoves() const {
+    vector <Board> res;
+    for (int col: COL_ORD) {
         if (_h[col] < ROWS) {
             int off = col * ROWS + _h[col];
             Board b(
@@ -198,7 +200,7 @@ inline Move Board::ab_max(int depth, int a, int b) const {
         return {.col=lastMove(), .score=-SCORE_WIN};
     }
 
-    vector<Board> moves = nextMoves();
+    vector <Board> moves = nextMoves();
     if (moves.empty()) {
         return {.col=lastMove(), .score=ab_score()};
     }
@@ -228,7 +230,7 @@ inline Move Board::ab_min(int depth, int a, int b) const {
         return {.col=lastMove(), .score=SCORE_WIN};
     }
 
-    vector<Board> moves = nextMoves();
+    vector <Board> moves = nextMoves();
     if (moves.empty()) {
         return {.col=lastMove(), .score=ab_score()};
     }
@@ -278,7 +280,7 @@ inline int Board::scorePlyr(bool plyr) const {
     //  - multiply z with amount of pins already occupied by p1
     //    - will be zero if no pin occupied
     ull cov = 0;
-    ull fill = 0;
+    int fill[5];
 
     // rows
     for (int row = 0; row < ROWS; ++row) {
@@ -288,19 +290,19 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((row2 & R1) == 0) * ((row1 & R1) > 0);
         cov |= (m1 * R1) << shift;
-        fill += m1 * BIT_CNT(row1 & R1);
+        fill[m1 * BIT_CNT(row1 & R1)]++;
 
         bool m2 = ((row2 & R2) == 0) * ((row1 & R2) > 0);
         cov |= (m2 * R2) << shift;
-        fill += m2 * BIT_CNT(row1 & R2);
+        fill[m2 * BIT_CNT(row1 & R2)]++;
 
         bool m3 = ((row2 & R3) == 0) * ((row1 & R3) > 0);
         cov |= (m3 * R3) << shift;
-        fill += m3 * BIT_CNT(row1 & R3);
+        fill[m3 * BIT_CNT(row1 & R3)]++;
 
         bool m4 = ((row2 & R4) == 0) * ((row1 & R4) > 0);
         cov |= (m4 * (row1 | R4)) << shift;
-        fill += m4 * BIT_CNT(row1 & R4);
+        fill[m4 * BIT_CNT(row1 & R4)]++;
     }
 
     // cols
@@ -311,18 +313,19 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((col2 & C1) == 0) * ((col1 & C1) > 0);
         cov |= (m1 * C1) << shift;
-        fill += m1 * BIT_CNT(col1 & C1);
+        fill[m1 * BIT_CNT(col1 & C1)];
 
         bool m2 = ((col2 & C2) == 0) * ((col1 & C2) > 0);
         cov |= (m2 * C2) << shift;
-        fill += m2 * BIT_CNT(col1 & C2);
+        fill[m2 * BIT_CNT(col1 & C2)];
 
         bool m3 = ((col2 & C3) == 0) * ((col1 & C3) > 0);
         cov |= (m3 * C3) << shift;
-        fill += m3 * BIT_CNT(col1 & C3);
+        fill[m3 * BIT_CNT(col1 & C3)];
     }
 
     // diag
 
-    return (int) (2 * BIT_CNT(cov) + fill);
+    int totalFill = fill[3] * SCORE_3;
+    return (int) (2 * BIT_CNT(cov) + totalFill);
 }
