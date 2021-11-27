@@ -319,5 +319,5 @@ inline int Board::scorePlyr(bool plyr) const {
 
     // diag
 
-    return (int) (BIT_CNT(cov) + fill);
+    return (int) (2 * BIT_CNT(cov) + fill);
 }
