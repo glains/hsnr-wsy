@@ -16,10 +16,6 @@ typedef unsigned long long ull;
 //-----------------------------------------------------------------------
 // MASKS
 
-const ull M = 0xf;
-// whole board set
-const ull ALL = 0x3FFFFFFFFFF;
-
 const ull R1 = 0x41041;
 const ull R2 = 0x1041040;
 const ull R3 = 0x41041000;
@@ -34,33 +30,48 @@ const ull R_CON3_4 = 0x1041040000;
 const ull C1 = 0x0f;
 const ull C2 = 0x1e;
 const ull C3 = 0x3c;
-const ull C_ALL_4 = 0xFFFFFF;
+
+const ull C_ALL4_1 = 0xFFFFFF;
+const ull C_ALL4_2 = 0x3FFFFFC0;
+const ull C_ALL4_3 = 0xFFFFFF000;
+const ull C_ALL4_4 = 0x3FFFFFC0000;
 
 // diagonals bot-left to top-right
-const ull D1 = 0x810204;
-const ull D2 = 0x20408102;
-const ull D3 = 0x810204081;
-const ull D4 = 0x20408102040;
-const ull D5 = 0x10204081000;
-const ull D6 = 0x8102040000;
+const ull D11 = 0x810204;
+const ull D12 = 0x20408102;
+const ull D13 = 0x810204081;
+const ull D14 = 0x20408102040;
+const ull D15 = 0x10204081000;
+const ull D16 = 0x8102040000;
+// diagonals bot-left to top-right
+const ull D21 = 0x42108;
+const ull D22 = 0x1084210;
+const ull D23 = 0x42108420;
+const ull D24 = 0x1084210800;
+const ull D25 = 0x2108420000;
+const ull D26 = 0x4210800000;
 
 const ull D_MSK_0 = 0x204081;
 const ull D_MSK_1 = 0x8888;
 
-const ull D_MSK[Board::N] = {
-        D3, D2, D1, 0, 0, 0,
-        D4, D3, D2, D1, 0, 0,
-        D5, D4, D3, D2, D1, 0,
-        D6, D5, D4, D3, D2, D1,
-        0, D6, D5, D4, D3, D2,
-        0, 0, D6, D5, D4, D3,
-        0, 0, 0, D6, D5, D4
+const ull D1_MSK[Board::N] = {
+        D13, D12, D11, 0, 0, 0,
+        D14, D13, D12, D11, 0, 0,
+        D15, D14, D13, D12, D11, 0,
+        D16, D15, D14, D13, D12, D11,
+        0, D16, D15, D14, D13, D12,
+        0, 0, D16, D15, D14, D13,
+        0, 0, 0, D16, D15, D14
 };
-
-// masks used to block columns 2,4 for a diagonal check
-const ull D_BLKR_C2 = (0xFFFull << (Board::ROWS * 2)) ^ ALL;
-const ull D_BLKR_C4 = (0xFFFull << (Board::ROWS * 4)) ^ ALL;
-
+const ull D2_MSK[Board::N] = {
+        0, 0, 0, D23, D22, D21,
+        0, 0, D24, D23, D22, D21,
+        0, D25, D24, D23, D22, D21,
+        D26, D25, D24, D23, D22, D21,
+        D26, D25, D24, D23, D22, 0,
+        D26, D25, D24, D23, 0, 0,
+        D26, D25, D24, 0, 0, 0
+};
 
 const ull ROW_MASK = 0x01041041041;
 const ull COL1_MASK = 0x3f;
@@ -103,18 +114,21 @@ vector<Board> Board::nextMoves() const {
 }
 
 bool Board::end() const {
-    if (_nmves == N) {
-        return true;
-    }
-    return won(lastMove());
+    return _nmves == N || won(lastMove());
 }
 
-inline bool Board::wonDia(ull t, int col) {
-    const int off = ROWS * col;
-    return BIT_CNT((t & D_MSK[off]) & (C_ALL_4 << (off + 0))) == 4 ||
-           BIT_CNT((t & D_MSK[off]) & (C_ALL_4 << (off + 1))) == 4 ||
-           BIT_CNT((t & D_MSK[off]) & (C_ALL_4 << (off + 2))) == 4 ||
-           BIT_CNT((t & D_MSK[off]) & (C_ALL_4 << (off + 3))) == 4;
+inline bool Board::wonDia(ull t, int col) const {
+    const int off = ROWS * col + _h[col] - 1;
+    ull blk1 = t & D1_MSK[off];
+    ull blk2 = t & D2_MSK[off];
+    return BIT_CNT(blk1 & C_ALL4_1) == 4 ||
+           BIT_CNT(blk1 & C_ALL4_2) == 4 ||
+           BIT_CNT(blk1 & C_ALL4_3) == 4 ||
+           BIT_CNT(blk1 & C_ALL4_4) == 4 ||
+           BIT_CNT(blk2 & C_ALL4_1) == 4 ||
+           BIT_CNT(blk2 & C_ALL4_2) == 4 ||
+           BIT_CNT(blk2 & C_ALL4_3) == 4 ||
+           BIT_CNT(blk2 & C_ALL4_4) == 4;
 }
 
 bool Board::won(int lastCol) const {
@@ -139,8 +153,7 @@ bool Board::won(int lastCol) const {
     if (won) return true;
 
     // dias
-    won |= wonDia(t, lastCol) ||
-           wonDia(invert(t), N - lastCol);
+    won |= wonDia(t, lastCol);
     if (won) return true;
 
     return false;
@@ -318,15 +331,15 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((col2 & C1) == 0) * ((col1 & C1) > 0);
         cov |= (m1 * C1) << shift;
-        c_Fill[m1 * BIT_CNT(col1 & C1)];
+        c_Fill[m1 * BIT_CNT(col1 & C1)]++;
 
         bool m2 = ((col2 & C2) == 0) * ((col1 & C2) > 0);
         cov |= (m2 * C2) << shift;
-        c_Fill[m2 * BIT_CNT(col1 & C2)];
+        c_Fill[m2 * BIT_CNT(col1 & C2)]++;
 
         bool m3 = ((col2 & C3) == 0) * ((col1 & C3) > 0);
         cov |= (m3 * C3) << shift;
-        c_Fill[m3 * BIT_CNT(col1 & C3)];
+        c_Fill[m3 * BIT_CNT(col1 & C3)]++;
     }
 
     // diag
@@ -339,7 +352,7 @@ inline int Board::scorePlyr(bool plyr) const {
         covDiag(&cov, ++off, t1, t2);
     }
 
-    int totalFill = c_Fill[3] * SCORE_3 + r_fill[3] * SCORE_3;
+    int totalFill = r_fill[3] * SCORE_3;
     return (int) ((BIT_CNT(cov) / N) * 100 + totalFill);
 }
 
@@ -357,8 +370,4 @@ inline void Board::covDiag(ull *cov, int off, ull t1, ull t2) {
     bool m12 = ((dia14 & D_MSK_1) == 0) * ((dia13 & D_MSK_1) > 0);
     *cov |= (m11 * (D_MSK_0 << off));
     *cov |= (m12 * (D_MSK_1 << off));
-}
-
-ull Board::invert(ull l) const {
-    return l; // TODO
 }

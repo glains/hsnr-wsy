@@ -116,7 +116,7 @@ private:
      */
     bool won(int lastCol) const;
 
-    static bool wonDia(ull t, int col);
+    bool wonDia(ull t, int col) const;
 
     Move ab_max(int depth, int a, int b) const;
 
@@ -130,7 +130,7 @@ private:
     [[nodiscard]]
     ull invert(ull l) const;
 
-    static void covDiag(ull *cov, int off, ull t1, ull t2) ;
+    static void covDiag(ull *cov, int off, ull t1, ull t2);
 };
 
 template<typename T>
