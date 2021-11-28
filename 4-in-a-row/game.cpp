@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <iostream>
+#include <algorithm>
 
 #define DEBUG
 #undef  DEBUG
@@ -79,7 +80,7 @@ const ull COL1_MASK = 0x3f;
 // score weights
 const int SCORE_2 = 2;
 const int SCORE_3 = 4;
-const int SCORE_WIN = 50000;
+const int SCORE_WIN = 500000;
 
 // assume that moves generated in the middle of the board have
 // the most impact on the game, therefore they should be
@@ -93,7 +94,7 @@ int Board::colRnk(int idx) const {
     return (int) bitset<N>(col & COL1_MASK).count();
 }
 
-vector<Board> Board::nextMoves() const {
+inline vector<Board> Board::nextMoves() const {
     vector<Board> res;
     for (int col: COL_ORD) {
         if (_h[col] < ROWS) {
@@ -111,6 +112,19 @@ vector<Board> Board::nextMoves() const {
         }
     }
     return res;
+}
+
+inline vector<Board> Board::nextMovesSorted() const {
+    vector<Board> moves = nextMoves();
+    int scores[moves.size()];
+    for (const auto &m: moves) {
+        scores[m.lastMove()] = m.search(1).score;
+    }
+    sort(moves.begin(), moves.end(),
+         [&scores](const Board &a, const Board &b) -> bool {
+             return scores[a.lastMove()] > scores[b.lastMove()];
+         });
+    return moves;
 }
 
 bool Board::end() const {
@@ -131,7 +145,7 @@ inline bool Board::wonDia(ull t, int col) const {
            BIT_CNT(blk2 & C_ALL4_4) == 4;
 }
 
-bool Board::won(int lastCol) const {
+inline bool Board::won(int lastCol) const {
     // check if the other player has won with his last move
     ull t = _toMove ? _mves1 : _mves0;
 

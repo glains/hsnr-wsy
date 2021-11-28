@@ -103,7 +103,9 @@ private:
 
     //-----------------------------------------------------------------------
 
-    inline std::vector<Board> nextMoves() const;
+    std::vector<Board> nextMoves() const;
+
+    std::vector<Board> nextMovesSorted() const;
 
     [[nodiscard]]
     int colRnk(int idx) const;
