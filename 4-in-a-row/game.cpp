@@ -13,7 +13,6 @@ using namespace std;
 
 typedef unsigned long long ull;
 
-
 //-----------------------------------------------------------------------
 // MASKS
 
@@ -46,6 +45,7 @@ const ull D5 = 0x10204081000;
 const ull D6 = 0x8102040000;
 
 const ull D_MSK_0 = 0x204081;
+const ull D_MSK_1 = 0x8888;
 
 const ull D_MSK[Board::N] = {
         D3, D2, D1, 0, 0, 0,
@@ -278,7 +278,7 @@ inline int Board::scorePlyr(bool plyr) const {
         t2 = _mves0;
     }
 
-    // compute the global maximum coverage score
+    // compute the global maximum covDiag score
     // for each spot of 4 pins (row, col, dia)
     //  - compute positive z if all pins not taken by p2, else 0
     //  - multiply z with amount of pins already occupied by p1
@@ -332,24 +332,31 @@ inline int Board::scorePlyr(bool plyr) const {
     // diag
 
     for (int i = 0; i < COLS; ++i) {
-        auto dia11 = ((t1 >> (i * ROWS)) & D_MSK_0);
-        auto dia12 = ((t2 >> (i * ROWS)) & D_MSK_0);
-        bool m1 = ((dia12 & D_MSK_0) == 0) * ((dia11 & D_MSK_0) > 0);
-        cov |= (m1 * (D_MSK_0 << (i * ROWS)));
+        int off = i * ROWS;
 
-        auto dia21 = ((t1 >> (i * ROWS + 1)) & D_MSK_0);
-        auto dia22 = ((t2 >> (i * ROWS + 1)) & D_MSK_0);
-        bool m2 = ((dia22 & D_MSK_0) == 0) * ((dia21 & D_MSK_0) > 0);
-        cov |= (m2 * (D_MSK_0 << (i * ROWS + 1)));
-
-        auto dia31 = ((t1 >> (i * ROWS + 2)) & D_MSK_0);
-        auto dia32 = ((t2 >> (i * ROWS + 2)) & D_MSK_0);
-        bool m3 = ((dia32 & D_MSK_0) == 0) * ((dia31 & D_MSK_0) > 0);
-        cov |= (m3 * (D_MSK_0 << (i * ROWS + 2)));
+        covDiag(&cov, off, t1, t2);
+        covDiag(&cov, ++off, t1, t2);
+        covDiag(&cov, ++off, t1, t2);
     }
 
     int totalFill = c_Fill[3] * SCORE_3 + r_fill[3] * SCORE_3;
     return (int) ((BIT_CNT(cov) / N) * 100 + totalFill);
+}
+
+inline void Board::covDiag(ull *cov, int off, ull t1, ull t2) {
+    ull t1_h = t1 >> off;
+    ull t2_h = t2 >> off;
+    // bottom-left to top-right
+    ull dia11 = (t1_h & D_MSK_0);
+    ull dia12 = (t2_h & D_MSK_0);
+    // top-left to bottom-right
+    ull dia13 = (t1_h & D_MSK_1);
+    ull dia14 = (t2_h & D_MSK_1);
+
+    bool m11 = ((dia12 & D_MSK_0) == 0) * ((dia11 & D_MSK_0) > 0);
+    bool m12 = ((dia14 & D_MSK_1) == 0) * ((dia13 & D_MSK_1) > 0);
+    *cov |= (m11 * (D_MSK_0 << off));
+    *cov |= (m12 * (D_MSK_1 << off));
 }
 
 ull Board::invert(ull l) const {

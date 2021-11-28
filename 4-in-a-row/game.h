@@ -129,6 +129,8 @@ private:
     // inverts a board column-wise, as if mirrored horizontally
     [[nodiscard]]
     ull invert(ull l) const;
+
+    static void covDiag(ull *cov, int off, ull t1, ull t2) ;
 };
 
 template<typename T>
