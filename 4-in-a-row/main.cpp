@@ -79,7 +79,7 @@ void playSimple() {
             int col = getNextMove();
             b = b.move(col);
         } else {
-            auto m = b.search(12);
+            auto m = b.search(10);
             cout << "col: " << m.col << " ; score: " << m.score << endl;
             b = b.move(m.col);
         }
