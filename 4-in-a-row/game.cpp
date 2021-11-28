@@ -45,6 +45,8 @@ const ull D4 = 0x20408102040;
 const ull D5 = 0x10204081000;
 const ull D6 = 0x8102040000;
 
+const ull D_MSK_0 = 0x204081;
+
 const ull D_MSK[Board::N] = {
         D3, D2, D1, 0, 0, 0,
         D4, D3, D2, D1, 0, 0,
@@ -59,7 +61,7 @@ const ull D_MSK[Board::N] = {
 const ull D_BLKR_C2 = (0xFFFull << (Board::ROWS * 2)) ^ ALL;
 const ull D_BLKR_C4 = (0xFFFull << (Board::ROWS * 4)) ^ ALL;
 
-const ull DIA_MASK = 0x204081;
+
 const ull ROW_MASK = 0x01041041041;
 const ull COL1_MASK = 0x3f;
 
@@ -329,40 +331,22 @@ inline int Board::scorePlyr(bool plyr) const {
 
     // diag
 
-    // by starting at idx 2, with a constant offset of 6,
-    // each iteration a different diag is visited
-    for (int i = 2; i < N - ROWS; i += 6) {
-        auto dia1 = (t1 & D_MSK[i]);
-        auto dia2 = (t2 & D_MSK[i]);
+    for (int i = 0; i < COLS; ++i) {
+        auto dia11 = ((t1 >> (i * ROWS)) & D_MSK_0);
+        auto dia12 = ((t2 >> (i * ROWS)) & D_MSK_0);
+        bool m1 = ((dia12 & D_MSK_0) == 0) * ((dia11 & D_MSK_0) > 0);
+        cov |= (m1 * (D_MSK_0 << (i * ROWS)));
 
-        ull blk1 = C_ALL_4 << 0 * ROWS;
-        ull local1 = dia1 & blk1;
-        bool m1 = ((dia2 & blk1) == 0) * (local1 > 0);
-        // wrong: we need to iter over all diags len 4
-        cov |= (m1 * local1);
+        auto dia21 = ((t1 >> (i * ROWS + 1)) & D_MSK_0);
+        auto dia22 = ((t2 >> (i * ROWS + 1)) & D_MSK_0);
+        bool m2 = ((dia22 & D_MSK_0) == 0) * ((dia21 & D_MSK_0) > 0);
+        cov |= (m2 * (D_MSK_0 << (i * ROWS + 1)));
 
-        cout << *this << endl;
-        cout << bits_to_string(local1) << endl;
-        cout << bits_to_string(cov) << endl;
-
-        ull blk2 = C_ALL_4 << 1 * ROWS;
-        ull local2 = dia1 & blk2;
-        bool m2 = ((dia2 & blk2) == 0) * (local2 > 0);
-        cov |= (m2 * local2);
-
-        ull blk3 = C_ALL_4 << 2 * ROWS;
-        ull local3 = dia1 & blk3;
-        bool m3 = ((dia2 & blk3) == 0) * (local3 > 0);
-        cov |= (m3 * local3);
-
-        ull blk4 = C_ALL_4 << 3 * ROWS;
-        ull local4 = dia1 & blk4;
-        bool m4 = ((dia2 & blk4) == 0) * (local4 > 0);
-        cov |= (m4 * local4);
+        auto dia31 = ((t1 >> (i * ROWS + 2)) & D_MSK_0);
+        auto dia32 = ((t2 >> (i * ROWS + 2)) & D_MSK_0);
+        bool m3 = ((dia32 & D_MSK_0) == 0) * ((dia31 & D_MSK_0) > 0);
+        cov |= (m3 * (D_MSK_0 << (i * ROWS + 2)));
     }
-
-    cout << *this << endl;
-    cout << bits_to_string(cov) << endl;
 
     int totalFill = 0;
     return (int) (2 * BIT_CNT(cov) + totalFill);
