@@ -69,7 +69,7 @@ public:
         for (int r = ROWS - 1; r >= 0; --r) {
             for (int c = 0; c < COLS; ++c) {
                 char ch = p1[c * ROWS + r] ? 'x' : (p2[c * ROWS + r] ? 'o' : '-');
-                os << ch;
+                os << ch << ' ';
             }
             os << std::endl;
         }
@@ -82,7 +82,7 @@ public:
         for (int r = ROWS - 1; r >= 0; --r) {
             for (int c = 0; c < COLS; ++c) {
                 char ch = p1[c * ROWS + r] ? 'x' : '-';
-                ss << ch;
+                ss << ch << ' ';
             }
             ss << std::endl;
         }
@@ -116,7 +116,7 @@ private:
      */
     bool won(int lastCol) const;
 
-    static bool wonDia(ull t, int col) ;
+    static bool wonDia(ull t, int col);
 
     Move ab_max(int depth, int a, int b) const;
 

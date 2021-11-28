@@ -349,7 +349,7 @@ inline int Board::scorePlyr(bool plyr) const {
     }
 
     int totalFill = c_Fill[3] * SCORE_3 + r_fill[3] * SCORE_3;
-    return (int) (2 * BIT_CNT(cov) + totalFill);
+    return (int) ((BIT_CNT(cov) / N) * 100 + totalFill);
 }
 
 ull Board::invert(ull l) const {
