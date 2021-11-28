@@ -114,7 +114,9 @@ private:
      * @param lastCol the last column a move has been made
      * @return true if the current player has 4-in-a-row
      */
-    inline bool won(int lastCol) const;
+    bool won(int lastCol) const;
+
+    static bool wonDia(ull t, int col) ;
 
     Move ab_max(int depth, int a, int b) const;
 
@@ -123,6 +125,10 @@ private:
     int ab_score() const;
 
     int scorePlyr(bool plyr) const;
+
+    // inverts a board column-wise, as if mirrored horizontally
+    [[nodiscard]]
+    ull invert(ull l) const;
 };
 
 template<typename T>

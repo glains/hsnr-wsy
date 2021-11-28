@@ -13,16 +13,57 @@ using namespace std;
 
 typedef unsigned long long ull;
 
+
+//-----------------------------------------------------------------------
+// MASKS
+
 const ull M = 0xf;
+// whole board set
+const ull ALL = 0x3FFFFFFFFFF;
+
 const ull R1 = 0x41041;
 const ull R2 = 0x1041040;
 const ull R3 = 0x41041000;
 const ull R4 = 0x1041040000;
 
+// 3-connected
+const ull R_CON3_1 = 0x41041;
+const ull R_CON3_2 = 0x1041040;
+const ull R_CON3_3 = 0x41041000;
+const ull R_CON3_4 = 0x1041040000;
+
 const ull C1 = 0x0f;
 const ull C2 = 0x1e;
 const ull C3 = 0x3c;
+const ull C_ALL_4 = 0xFFFFFF;
 
+// diagonals bot-left to top-right
+const ull D1 = 0x810204;
+const ull D2 = 0x20408102;
+const ull D3 = 0x810204081;
+const ull D4 = 0x20408102040;
+const ull D5 = 0x10204081000;
+const ull D6 = 0x8102040000;
+
+const ull D_MSK[Board::N] = {
+        D3, D2, D1, 0, 0, 0,
+        D4, D3, D2, D1, 0, 0,
+        D5, D4, D3, D2, D1, 0,
+        D6, D5, D4, D3, D2, D1,
+        0, D6, D5, D4, D3, D2,
+        0, 0, D6, D5, D4, D3,
+        0, 0, 0, D6, D5, D4
+};
+
+// masks used to block columns 2,4 for a diagonal check
+const ull D_BLKR_C2 = (0xFFFull << (Board::ROWS * 2)) ^ ALL;
+const ull D_BLKR_C4 = (0xFFFull << (Board::ROWS * 4)) ^ ALL;
+
+const ull DIA_MASK = 0x204081;
+const ull ROW_MASK = 0x01041041041;
+const ull COL1_MASK = 0x3f;
+
+// score weights
 const int SCORE_2 = 2;
 const int SCORE_3 = 4;
 const int SCORE_WIN = 50000;
@@ -32,30 +73,6 @@ const int SCORE_WIN = 50000;
 // evaluated in that order
 const int COL_ORD[7] = {3, 2, 4, 1, 5, 0, 6};
 
-const ull DM = 0x0204081ull;
-
-const array <ull, Board::ROWS> ROW_MSK = {
-        0x01041041041,
-        0x02082082082,
-        0x04104104104,
-        0x08208208208,
-        0x10410410410,
-        0x20820820820
-};
-
-const ull DIA_MASK = 0x204081;
-const ull ROW_MASK = 0x01041041041;
-const ull COL1_MASK = 0x3f;
-
-const array <ull, Board::ROWS> DIA_AND = {
-        0b00000000000000000000000100000010000001000000100,
-        0b00000000000000000100000010000001000000100000010,
-        0b00000000000100000010000001000000100000010000001,
-        0b00000100000010000001000000100000010000001000000,
-        0b01000000100000010000001000000100000000000000000,
-        0b00100000010000001000000100000000000000000000000,
-};
-
 //-----------------------------------------------------------------------
 
 int Board::colRnk(int idx) const {
@@ -63,8 +80,8 @@ int Board::colRnk(int idx) const {
     return (int) bitset<N>(col & COL1_MASK).count();
 }
 
-vector <Board> Board::nextMoves() const {
-    vector <Board> res;
+vector<Board> Board::nextMoves() const {
+    vector<Board> res;
     for (int col: COL_ORD) {
         if (_h[col] < ROWS) {
             int off = col * ROWS + _h[col];
@@ -88,57 +105,42 @@ bool Board::end() const {
         return true;
     }
     return won(lastMove());
+}
 
-    /*
-    // diag
-    if (_nmves < 10) {
-        return false; // min num to win diag
-    }
-
-    // left bottom to right top column
-    const int maxDiag = 5;
-    for (int c = 0; c < maxDiag; ++c) {
-        if (_h[c + 3] < 4) continue;
-        const int off = ROWS * c;
-        // left bottom to right top, length 4
-        if ((t >> (0 + off) & DIA_MASK) == DIA_MASK ||
-            (t >> (1 + off) & DIA_MASK) == DIA_MASK ||
-            (t >> (2 + off) & DIA_MASK) == DIA_MASK) {
-            return true;
-        }
-    }
-    */
-    return false;
+inline bool Board::wonDia(ull t, int col) {
+    const int off = ROWS * col;
+    return BIT_CNT((t & D_MSK[off]) & (C_ALL_4 << (off + 0))) == 4 ||
+           BIT_CNT((t & D_MSK[off]) & (C_ALL_4 << (off + 1))) == 4 ||
+           BIT_CNT((t & D_MSK[off]) & (C_ALL_4 << (off + 2))) == 4 ||
+           BIT_CNT((t & D_MSK[off]) & (C_ALL_4 << (off + 3))) == 4;
 }
 
 bool Board::won(int lastCol) const {
-    // check if the other player has end
+    // check if the other player has won with his last move
     ull t = _toMove ? _mves1 : _mves0;
-    bool win = false;
+
+    bool won = false;
     // rows
     int prevHeight = _h[lastCol] - 1;
     ull row = ((t >> prevHeight) & ROW_MASK);
-    win |= (row & R1) == R1 ||
+    won |= (row & R1) == R1 ||
            (row & R2) == R2 ||
            (row & R3) == R3 ||
            (row & R4) == R4;
-    if (win) return true;
+    if (won) return true;
 
     // cols
     ull col = (t >> (lastCol * ROWS));
-    win |= (col & C1) == C1 ||
+    won |= (col & C1) == C1 ||
            (col & C2) == C2 ||
            (col & C3) == C3;
-    if (win) return true;
+    if (won) return true;
 
-    /*
-    const int off = ROWS * lastCol;
-    // left bottom to right top, length 4
-    win |= (t >> (0 + off) & DIA_MASK) == DIA_MASK ||
-           (t >> (1 + off) & DIA_MASK) == DIA_MASK ||
-           (t >> (2 + off) & DIA_MASK) == DIA_MASK;
-    */
-    if (win) return true;
+    // dias
+    won |= wonDia(t, lastCol) ||
+           wonDia(invert(t), N - lastCol);
+    if (won) return true;
+
     return false;
 }
 
@@ -200,7 +202,7 @@ inline Move Board::ab_max(int depth, int a, int b) const {
         return {.col=lastMove(), .score=-SCORE_WIN};
     }
 
-    vector <Board> moves = nextMoves();
+    vector<Board> moves = nextMoves();
     if (moves.empty()) {
         return {.col=lastMove(), .score=ab_score()};
     }
@@ -230,7 +232,7 @@ inline Move Board::ab_min(int depth, int a, int b) const {
         return {.col=lastMove(), .score=SCORE_WIN};
     }
 
-    vector <Board> moves = nextMoves();
+    vector<Board> moves = nextMoves();
     if (moves.empty()) {
         return {.col=lastMove(), .score=ab_score()};
     }
@@ -280,8 +282,8 @@ inline int Board::scorePlyr(bool plyr) const {
     //  - multiply z with amount of pins already occupied by p1
     //    - will be zero if no pin occupied
     ull cov = 0;
-    int fill[5];
 
+    int rfill[5];
     // rows
     for (int row = 0; row < ROWS; ++row) {
         int shift = row;
@@ -290,22 +292,23 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((row2 & R1) == 0) * ((row1 & R1) > 0);
         cov |= (m1 * R1) << shift;
-        fill[m1 * BIT_CNT(row1 & R1)]++;
+        rfill[m1 * BIT_CNT(row1 & R1)]++;
 
         bool m2 = ((row2 & R2) == 0) * ((row1 & R2) > 0);
         cov |= (m2 * R2) << shift;
-        fill[m2 * BIT_CNT(row1 & R2)]++;
+        rfill[m2 * BIT_CNT(row1 & R2)]++;
 
         bool m3 = ((row2 & R3) == 0) * ((row1 & R3) > 0);
         cov |= (m3 * R3) << shift;
-        fill[m3 * BIT_CNT(row1 & R3)]++;
+        rfill[m3 * BIT_CNT(row1 & R3)]++;
 
         bool m4 = ((row2 & R4) == 0) * ((row1 & R4) > 0);
         cov |= (m4 * (row1 | R4)) << shift;
-        fill[m4 * BIT_CNT(row1 & R4)]++;
+        rfill[m4 * BIT_CNT(row1 & R4)]++;
     }
 
     // cols
+    int colFill[5];
     for (int col = 0; col < COLS; ++col) {
         int shift = col * ROWS;
         auto col1 = (t1 >> shift);
@@ -313,19 +316,58 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((col2 & C1) == 0) * ((col1 & C1) > 0);
         cov |= (m1 * C1) << shift;
-        fill[m1 * BIT_CNT(col1 & C1)];
+        colFill[m1 * BIT_CNT(col1 & C1)];
 
         bool m2 = ((col2 & C2) == 0) * ((col1 & C2) > 0);
         cov |= (m2 * C2) << shift;
-        fill[m2 * BIT_CNT(col1 & C2)];
+        colFill[m2 * BIT_CNT(col1 & C2)];
 
         bool m3 = ((col2 & C3) == 0) * ((col1 & C3) > 0);
         cov |= (m3 * C3) << shift;
-        fill[m3 * BIT_CNT(col1 & C3)];
+        colFill[m3 * BIT_CNT(col1 & C3)];
     }
 
     // diag
 
-    int totalFill = fill[3] * SCORE_3;
+    // by starting at idx 2, with a constant offset of 6,
+    // each iteration a different diag is visited
+    for (int i = 2; i < N - ROWS; i += 6) {
+        auto dia1 = (t1 & D_MSK[i]);
+        auto dia2 = (t2 & D_MSK[i]);
+
+        ull blk1 = C_ALL_4 << 0 * ROWS;
+        ull local1 = dia1 & blk1;
+        bool m1 = ((dia2 & blk1) == 0) * (local1 > 0);
+        // wrong: we need to iter over all diags len 4
+        cov |= (m1 * local1);
+
+        cout << *this << endl;
+        cout << bits_to_string(local1) << endl;
+        cout << bits_to_string(cov) << endl;
+
+        ull blk2 = C_ALL_4 << 1 * ROWS;
+        ull local2 = dia1 & blk2;
+        bool m2 = ((dia2 & blk2) == 0) * (local2 > 0);
+        cov |= (m2 * local2);
+
+        ull blk3 = C_ALL_4 << 2 * ROWS;
+        ull local3 = dia1 & blk3;
+        bool m3 = ((dia2 & blk3) == 0) * (local3 > 0);
+        cov |= (m3 * local3);
+
+        ull blk4 = C_ALL_4 << 3 * ROWS;
+        ull local4 = dia1 & blk4;
+        bool m4 = ((dia2 & blk4) == 0) * (local4 > 0);
+        cov |= (m4 * local4);
+    }
+
+    cout << *this << endl;
+    cout << bits_to_string(cov) << endl;
+
+    int totalFill = 0;
     return (int) (2 * BIT_CNT(cov) + totalFill);
+}
+
+ull Board::invert(ull l) const {
+    return l; // TODO
 }
