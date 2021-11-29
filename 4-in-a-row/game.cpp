@@ -145,6 +145,7 @@ inline bool Board::wonDia(ull t, int col) const {
            BIT_CNT(blk2 & C_ALL4_4) == 4;
 }
 
+
 inline bool Board::won(int lastCol) const {
     // check if the other player has won with his last move
     ull t = _toMove ? _mves1 : _mves0;
@@ -173,13 +174,21 @@ inline bool Board::won(int lastCol) const {
     return false;
 }
 
+Move Board::search() const {
+    if (_nmves < 3 * ROWS) {
+        return search(11);
+    }
+    // fully expand tree
+    return search(N);
+}
+
 Move Board::search(int depth) const {
     return ab_max(depth, INT_MIN, INT_MAX);
 }
 
 Board Board::move(int col) const {
     if (won(lastMove())) {
-        throw std::logic_error("already end");
+        throw std::invalid_argument("already end");
     }
     if (_toMove) {
         if (_h[col] < ROWS) {
@@ -196,7 +205,7 @@ Board Board::move(int col) const {
 
             return b;
         }
-        throw std::logic_error("already full");
+        throw std::invalid_argument("already full");
     } else {
         if (_h[col] < ROWS) {
             int off = col * ROWS + _h[col];
@@ -212,7 +221,7 @@ Board Board::move(int col) const {
 
             return b;
         }
-        throw std::logic_error("already full");
+        throw std::invalid_argument("already full");
     }
 }
 
@@ -384,4 +393,8 @@ inline void Board::covDiag(ull *cov, int off, ull t1, ull t2) {
     bool m12 = ((dia14 & D_MSK_1) == 0) * ((dia13 & D_MSK_1) > 0);
     *cov |= (m11 * (D_MSK_0 << off));
     *cov |= (m12 * (D_MSK_1 << off));
+}
+
+bool Board::won() const {
+    return won(lastMove());
 }

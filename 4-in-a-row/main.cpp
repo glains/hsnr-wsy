@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <exception>
 
 using namespace std;
 
@@ -52,7 +53,7 @@ void testMove() {
     ull l1 = 0b0111000000;
     ull l2 = 0b0000000001;
     Board b2(l1, l2);
-    auto move = b2.search(10);
+    auto move = b2.search(12);
     cout << b2 << endl;
     cout << b2.move(move.col) << endl;
 }
@@ -74,20 +75,63 @@ int getNextMove() {
 void playSimple() {
     bool ownTurn = true;
     Board b;
+    cout << b << endl;
+
     while (!b.end()) {
         if (ownTurn) {
-            int col = getNextMove();
-            b = b.move(col);
+            cout << "your turn, make a move" << endl;
+            while (true) {
+                int col = getNextMove();
+                try {
+                    b = b.move(col);
+                    break;
+                } catch (invalid_argument &e) {
+                    cout << e.what() << endl;
+                }
+            }
         } else {
             auto m = b.search(10);
             cout << "col: " << m.col << " ; score: " << m.score << endl;
             b = b.move(m.col);
         }
-
         cout << b << endl;
-
         ownTurn = !ownTurn;
     }
+    if (ownTurn) {
+        cout << "player 2 has won" << endl;
+    } else {
+        cout << "player 1 has won" << endl;
+    }
+}
+
+void playAutoAgent() {
+    bool ownTurn = true;
+    Board b;
+    cout << b << endl;
+
+    while (!b.end()) {
+        if (ownTurn) {
+            auto m = b.search();
+            cout << "col: " << m.col << " ; score: " << m.score << endl;
+            b = b.move(m.col);
+        } else {
+            auto m = b.search();
+            cout << "col: " << m.col << " ; score: " << m.score << endl;
+            b = b.move(m.col);
+        }
+        cout << b << endl;
+        ownTurn = !ownTurn;
+    }
+    if (b.won()) {
+        if (ownTurn) {
+            cout << "player 2 has won" << endl;
+        } else {
+            cout << "player 1 has won" << endl;
+        }
+    } else {
+        cout << "draw" << endl;
+    }
+
 }
 
 int main() {
@@ -95,5 +139,6 @@ int main() {
     //testRow();
     //testMove2();
     //test();
-    playSimple();
+    //playSimple();
+    playAutoAgent();
 }

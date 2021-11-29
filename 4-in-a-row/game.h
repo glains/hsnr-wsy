@@ -48,6 +48,10 @@ public:
 
     //-----------------------------------------------------------------------
 
+    [[nodiscard]]
+    Move search() const;
+
+    [[nodiscard]]
     Move search(int depth) const;
 
     Board move(int col) const;
@@ -57,7 +61,11 @@ public:
         return _h[COLS];
     }
 
+    [[nodiscard]]
     bool end() const;
+
+    [[nodiscard]]
+    bool won() const;
 
     int testScore();
 
@@ -73,6 +81,7 @@ public:
             }
             os << std::endl;
         }
+        os << "0 1 2 3 4 5 6" << std::endl;
         return os;
     }
 
