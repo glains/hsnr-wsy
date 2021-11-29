@@ -142,6 +142,8 @@ private:
     ull invert(ull l) const;
 
     static void covDiag(ull *cov, int off, ull t1, ull t2);
+
+    Move ab_max_init(int depth, int a, int b) const;
 };
 
 template<typename T>

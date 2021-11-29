@@ -90,7 +90,7 @@ void playSimple() {
                 }
             }
         } else {
-            auto m = b.search(10);
+            auto m = b.search();
             cout << "col: " << m.col << " ; score: " << m.score << endl;
             b = b.move(m.col);
         }
@@ -139,6 +139,6 @@ int main() {
     //testRow();
     //testMove2();
     //test();
-    //playSimple();
-    playAutoAgent();
+    playSimple();
+    //playAutoAgent();
 }

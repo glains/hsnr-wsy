@@ -118,7 +118,7 @@ inline vector<Board> Board::nextMovesSorted() const {
     vector<Board> moves = nextMoves();
     int scores[moves.size()];
     for (const auto &m: moves) {
-        scores[m.lastMove()] = m.search(1).score;
+        scores[m.lastMove()] = m.ab_max(2, INT_MIN, INT_MAX).score;
     }
     sort(moves.begin(), moves.end(),
          [&scores](const Board &a, const Board &b) -> bool {
@@ -183,7 +183,7 @@ Move Board::search() const {
 }
 
 Move Board::search(int depth) const {
-    return ab_max(depth, INT_MIN, INT_MAX);
+    return ab_max_init(depth, INT_MIN, INT_MAX);
 }
 
 Board Board::move(int col) const {
@@ -227,6 +227,36 @@ Board Board::move(int col) const {
 
 //-----------------------------------------------------------------------
 // Alpha-Beta-Pruning
+
+inline Move Board::ab_max_init(int depth, int a, int b) const {
+    if (depth == 0) {
+        if (won(lastMove())) {
+            return {.col=lastMove(), .score=-SCORE_WIN};
+        }
+        return {.col=lastMove(), .score=ab_score()};
+    }
+    // checking for a win here saves a call in #nextMoves and #score
+    if (won(lastMove())) {
+        return {.col=lastMove(), .score=-SCORE_WIN};
+    }
+
+    vector<Board> moves = nextMovesSorted();
+    if (moves.empty()) {
+        return {.col=lastMove(), .score=ab_score()};
+    }
+
+    int col = 0;
+    int max = a;
+    for (auto &m: moves) {
+        Move val = m.ab_min(depth - 1, max, b);
+        if (val.score > max) {
+            col = m.lastMove();
+            max = val.score;
+            if (max >= b) break; // cutoff
+        }
+    }
+    return {.col = col, .score = max};
+}
 
 inline Move Board::ab_max(int depth, int a, int b) const {
     if (depth == 0) {
