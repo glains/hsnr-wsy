@@ -65,13 +65,13 @@ const ull D1_MSK[Board::N] = {
         0, 0, 0, D16, D15, D14
 };
 const ull D2_MSK[Board::N] = {
-        0, 0, 0, D23, D22, D21,
-        0, 0, D24, D23, D22, D21,
-        0, D25, D24, D23, D22, D21,
-        D26, D25, D24, D23, D22, D21,
-        D26, D25, D24, D23, D22, 0,
-        D26, D25, D24, D23, 0, 0,
-        D26, D25, D24, 0, 0, 0
+        0, 0, 0, D21, D22, D23,
+        0, 0, D21, D22, D23, D24,
+        0, D21, D22, D23, D24, D25,
+        D21, D22, D23, D24, D25, D26,
+        D22, D23, D24, D25, D26, 0,
+        D23, D24, D25, D26, 0, 0,
+        D24, D25, D26, 0, 0, 0
 };
 
 const ull ROW_MASK = 0x01041041041;
@@ -118,7 +118,7 @@ inline vector<Board> Board::nextMovesSorted() const {
     vector<Board> moves = nextMoves();
     int scores[moves.size()];
     for (const auto &m: moves) {
-        scores[m.lastMove()] = m.ab_max(2, INT_MIN, INT_MAX).score;
+        scores[m.lastMove()] = m.ab_max(3, INT_MIN, INT_MAX).score;
     }
     sort(moves.begin(), moves.end(),
          [&scores](const Board &a, const Board &b) -> bool {
@@ -176,7 +176,7 @@ inline bool Board::won(int lastCol) const {
 
 Move Board::search() const {
     if (_nmves < 3 * ROWS) {
-        return search(11);
+        return search(12);
     }
     // fully expand tree
     return search(N);
@@ -376,7 +376,7 @@ inline int Board::scorePlyr(bool plyr) const {
     }
 
     // cols
-    int c_Fill[5];
+    int c_fill[5];
     for (int col = 0; col < COLS; ++col) {
         int shift = col * ROWS;
         auto col1 = (t1 >> shift);
@@ -384,15 +384,15 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((col2 & C1) == 0) * ((col1 & C1) > 0);
         cov |= (m1 * C1) << shift;
-        c_Fill[m1 * BIT_CNT(col1 & C1)]++;
+        c_fill[m1 * BIT_CNT(col1 & C1)]++;
 
         bool m2 = ((col2 & C2) == 0) * ((col1 & C2) > 0);
         cov |= (m2 * C2) << shift;
-        c_Fill[m2 * BIT_CNT(col1 & C2)]++;
+        c_fill[m2 * BIT_CNT(col1 & C2)]++;
 
         bool m3 = ((col2 & C3) == 0) * ((col1 & C3) > 0);
         cov |= (m3 * C3) << shift;
-        c_Fill[m3 * BIT_CNT(col1 & C3)]++;
+        c_fill[m3 * BIT_CNT(col1 & C3)]++;
     }
 
     // diag
@@ -405,7 +405,7 @@ inline int Board::scorePlyr(bool plyr) const {
         covDiag(&cov, ++off, t1, t2);
     }
 
-    int totalFill = r_fill[3] * SCORE_3;
+    int totalFill = r_fill[2] * 2 + r_fill[3] * 4 + c_fill[3] * 3;
     return (int) ((BIT_CNT(cov) / N) * 100 + totalFill);
 }
 
