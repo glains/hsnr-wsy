@@ -81,7 +81,7 @@ public:
             }
             os << std::endl;
         }
-        os << "0 1 2 3 4 5 6" << std::endl;
+        os << std::endl << "0 1 2 3 4 5 6" << std::endl;
         return os;
     }
 

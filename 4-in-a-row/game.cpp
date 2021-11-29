@@ -176,7 +176,7 @@ inline bool Board::won(int lastCol) const {
 
 Move Board::search() const {
     if (_nmves < 3 * ROWS) {
-        return search(12);
+        return search(11);
     }
     // fully expand tree
     return search(N);
@@ -405,7 +405,7 @@ inline int Board::scorePlyr(bool plyr) const {
         covDiag(&cov, ++off, t1, t2);
     }
 
-    int totalFill = r_fill[2] * 2 + r_fill[3] * 4 + c_fill[3] * 3;
+    int totalFill = r_fill[2] * 2 + r_fill[3] * 4 + c_fill[3] * 10;
     return (int) ((BIT_CNT(cov) / N) * 100 + totalFill);
 }
 
