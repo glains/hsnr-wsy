@@ -81,6 +81,7 @@ const ull COL1_MASK = 0x3f;
 const int SCORE_2 = 2;
 const int SCORE_3 = 4;
 const int SCORE_WIN = 500000;
+const int SCORE_WINNING = SCORE_WIN - Board::N;
 
 // assume that moves generated in the middle of the board have
 // the most impact on the game, therefore they should be
@@ -247,6 +248,24 @@ inline Move Board::ab_max_init(int depth, int a, int b) const {
 
     int col = 0;
     int max = a;
+
+    // chose a single non-losing move if it exists
+    int c = 0;
+    for (auto &m: moves) {
+        Move val = m.ab_min(1, a, b);
+        if (val.score > -SCORE_WINNING) {
+            col = m.lastMove();
+            max = val.score;
+            c++;
+        }
+    }
+    if (c == 1) {
+        return {.col = col, .score = max};
+    }
+
+    col = 0;
+    max = a;
+
     for (auto &m: moves) {
         Move val = m.ab_min(depth - 1, max, b);
         if (val.score > max) {
