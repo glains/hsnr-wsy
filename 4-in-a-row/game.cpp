@@ -261,13 +261,13 @@ inline Move Board::ab_max_init(int depth, int a, int b) const {
 inline Move Board::ab_max(int depth, int a, int b) const {
     if (depth == 0) {
         if (won(lastMove())) {
-            return {.col=lastMove(), .score=-SCORE_WIN};
+            return {.col=lastMove(), .score=-SCORE_WIN + _nmves};
         }
         return {.col=lastMove(), .score=ab_score()};
     }
     // checking for a win here saves a call in #nextMoves and #score
     if (won(lastMove())) {
-        return {.col=lastMove(), .score=-SCORE_WIN};
+        return {.col=lastMove(), .score=-SCORE_WIN + _nmves};
     }
 
     vector<Board> moves = nextMoves();
@@ -291,13 +291,15 @@ inline Move Board::ab_max(int depth, int a, int b) const {
 inline Move Board::ab_min(int depth, int a, int b) const {
     if (depth == 0) {
         if (won(lastMove())) {
-            return {.col=lastMove(), .score=SCORE_WIN};
+            return {.col=lastMove(), .score=SCORE_WIN - _nmves};
         }
         return {.col=lastMove(), .score=ab_score()};
     }
     // checking for a win here saves a call in #nextMoves and #score
     if (won(lastMove())) {
-        return {.col=lastMove(), .score=SCORE_WIN};
+        // by subtracting the amount of moves made, a win with
+        // the least amount of moves is preferred
+        return {.col=lastMove(), .score=SCORE_WIN - _nmves};
     }
 
     vector<Board> moves = nextMoves();
@@ -321,10 +323,6 @@ inline Move Board::ab_min(int depth, int a, int b) const {
         }
     }
     return {.col = col, .score = min};
-}
-
-int Board::testScore() {
-    return ab_score();
 }
 
 inline int Board::ab_score() const {

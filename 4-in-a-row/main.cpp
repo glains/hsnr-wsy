@@ -23,7 +23,7 @@ void test() {
 
     auto t1 = high_resolution_clock::now();
     for (int t = 0; t < 1000000000; ++t) {
-        b2.testScore();
+       int col = b2.search().col;
     }
     auto t2 = high_resolution_clock::now();
 
@@ -39,7 +39,7 @@ void testCol() {
     ull l1 = 0b011100;
     ull l2 = 0b100010;
     Board b2(l1, l2);
-    cout << "col: " << b2.testScore() << endl;
+    cout << "col: " << b2.search().col << endl;
 }
 
 void testRow() {

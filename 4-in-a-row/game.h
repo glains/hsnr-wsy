@@ -12,7 +12,9 @@
 typedef unsigned long long ull;
 
 struct Move {
+    // column (range 0-6)
     int col;
+    // score of that move
     int score;
 };
 
@@ -40,7 +42,7 @@ public:
     Board(const Board &b) : _mves0(b._mves0), _mves1(b._mves1) {
         _nmves = b._nmves;
         _toMove = b._toMove;
-        _h = b._h; // TODO: copy
+        _h = b._h;
     }
 
     Board(int nmves, const ull mves0, const ull mves1, const bool toMove, const std::array<int, COLS + 1> &h) : _nmves(
@@ -48,26 +50,59 @@ public:
 
     //-----------------------------------------------------------------------
 
+    /**
+     * Uses minimax to search for a next best-scored move.
+     * <p>
+     * The search-depth will be determined automatically.
+     *
+     * @return the best-scored move
+     */
     [[nodiscard]]
     Move search() const;
 
+    /**
+    * Uses minimax to search for a next best-scored move.
+    *
+    * @param depth the maximum depth, greater zero
+    * @return the best-scored move
+    */
     [[nodiscard]]
     Move search(int depth) const;
 
+    /**
+     * Obtains a new board with the specified move made.
+     *
+     * @param col the column (range 0-6)
+     * @return the new board
+     */
+    [[nodiscard]]
     Board move(int col) const;
 
+    /**
+     * Obtains the column of the last move
+     *
+     * @return the column (range 0-6)
+     */
     [[nodiscard]]
-    inline int lastMove() const {
+    int lastMove() const {
         return _h[COLS];
     }
 
+    /**
+     * Validates if either player has won or the game is drawn.
+     *
+     * @return true if the game has ended
+     */
     [[nodiscard]]
     bool end() const;
 
+    /**
+     * Validates if the last move lead to a win.
+     *
+     * @return true if won
+     */
     [[nodiscard]]
     bool won() const;
-
-    int testScore();
 
     //-----------------------------------------------------------------------
 
@@ -112,8 +147,10 @@ private:
 
     //-----------------------------------------------------------------------
 
+    [[nodiscard]]
     std::vector<Board> nextMoves() const;
 
+    [[nodiscard]]
     std::vector<Board> nextMovesSorted() const;
 
     [[nodiscard]]
@@ -125,25 +162,28 @@ private:
      * @param lastCol the last column a move has been made
      * @return true if the current player has 4-in-a-row
      */
+    [[nodiscard]]
     bool won(int lastCol) const;
 
+    [[nodiscard]]
     bool wonDia(ull t, int col) const;
 
+    [[nodiscard]]
     Move ab_max(int depth, int a, int b) const;
 
+    [[nodiscard]]
+    Move ab_max_init(int depth, int a, int b) const;
+
+    [[nodiscard]]
     Move ab_min(int depth, int a, int b) const;
 
+    [[nodiscard]]
     int ab_score() const;
 
+    [[nodiscard]]
     int scorePlyr(bool plyr) const;
 
-    // inverts a board column-wise, as if mirrored horizontally
-    [[nodiscard]]
-    ull invert(ull l) const;
-
     static void covDiag(ull *cov, int off, ull t1, ull t2);
-
-    Move ab_max_init(int depth, int a, int b) const;
 };
 
 template<typename T>
