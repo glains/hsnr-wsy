@@ -10,6 +10,9 @@
 #define OUT_BIT(long) (cout << bitset<N>(long) << endl);
 #define BIT_CNT(l) (bitset<N>(l).count())
 
+#define AB_MIN std::numeric_limits<int>::min()
+#define AB_MAX std::numeric_limits<int>::max()
+
 using namespace std;
 
 typedef unsigned long long ull;
@@ -119,7 +122,7 @@ inline vector<Board> Board::nextMovesSorted() const {
     vector<Board> moves = nextMoves();
     int scores[moves.size()];
     for (const auto &m: moves) {
-        scores[m.lastMove()] = m.ab_max(3, INT_MIN, INT_MAX).score;
+        scores[m.lastMove()] = m.ab_max(3, AB_MIN, AB_MAX).score;
     }
     sort(moves.begin(), moves.end(),
          [&scores](const Board &a, const Board &b) -> bool {
@@ -184,7 +187,7 @@ Move Board::search() const {
 }
 
 Move Board::search(int depth) const {
-    return ab_max_init(depth, INT_MIN, INT_MAX);
+    return ab_max_init(depth, AB_MIN, AB_MAX);
 }
 
 Board Board::move(int col) const {
