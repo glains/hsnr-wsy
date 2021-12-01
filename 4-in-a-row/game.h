@@ -18,6 +18,31 @@ struct Move {
     int score;
 };
 
+enum Status {
+    EQUAL,
+    LOSING,
+    WINNING,
+};
+
+static std::string status_to_string(const Status &status) {
+    switch (status) {
+        case EQUAL: {
+            return "equal";
+        }
+        case LOSING: {
+            return "losing";
+        }
+        case WINNING: {
+            return "winning";
+        }
+    }
+}
+
+struct Eval {
+    Move move;
+    Status status;
+};
+
 class Board {
 public:
     constexpr const static int ROWS = 6;
@@ -58,7 +83,7 @@ public:
      * @return the best-scored move
      */
     [[nodiscard]]
-    Move search() const;
+    Eval search() const;
 
     /**
     * Uses minimax to search for a next best-scored move.
@@ -67,7 +92,7 @@ public:
     * @return the best-scored move
     */
     [[nodiscard]]
-    Move search(int depth) const;
+    Eval search(int depth) const;
 
     /**
      * Obtains a new board with the specified move made.

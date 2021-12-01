@@ -178,7 +178,7 @@ inline bool Board::won(int lastCol) const {
     return false;
 }
 
-Move Board::search() const {
+Eval Board::search() const {
     if (_nmves < 3 * ROWS) {
         return search(11);
     }
@@ -186,8 +186,15 @@ Move Board::search() const {
     return search(N);
 }
 
-Move Board::search(int depth) const {
-    return ab_max_init(depth, AB_MIN, AB_MAX);
+Eval Board::search(int depth) const {
+    Move move = ab_max_init(depth, AB_MIN, AB_MAX);
+    Status status = EQUAL;
+    if (move.score >= WINNING) {
+        status = WINNING;
+    } else if (move.score <= -WINNING) {
+        status = LOSING;
+    }
+    return {.move = move, .status = status};
 }
 
 Board Board::move(int col) const {
