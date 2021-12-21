@@ -196,9 +196,9 @@ Eval Board::search() const {
 Eval Board::search(int depth) const {
     Move move = ab_max_init(depth, AB_MIN, AB_MAX);
     Status status = EQUAL;
-    if (move.score >= WINNING) {
+    if (move.score >= SCORE_WINNING) {
         status = WINNING;
-    } else if (move.score <= -WINNING) {
+    } else if (move.score <= -SCORE_WINNING) {
         status = LOSING;
     }
     return {.move = move, .status = status};
@@ -390,7 +390,7 @@ inline int Board::scorePlyr(bool plyr) const {
     // counts number of times
     int zugzwang = 0;
 
-    int r_fill[5];
+    int r_fill[5] = {0};
     // rows
     for (int row = 0; row < ROWS; ++row) {
         for (int col = 0; col < 4; ++col) {
@@ -400,16 +400,21 @@ inline int Board::scorePlyr(bool plyr) const {
 
             bool m = ((row2 & R1) == 0) * ((row1 & R1) > 0);
             cov |= (m * R1) << shift;
-            size_t cnt = popcount(row1 & R1);
+            int cnt = popcount(row1 & R1);
             r_fill[m * cnt]++;
 
-            int h3 = _h[countr_zero(~(row1 & R1) & R1) / ROWS];
-            zugzwang += (m * (cnt == 3) * ((mvesLeft + h3) & 1)) * mvesLeft;
+            int free = countr_zero(~(row1 & R1) & R1);
+            int h3 = _h[(free / ROWS) + col];
+            bool own = ((mvesLeft - ROWS + h3 + row) & 1) != 0;
+
+            if ((m * (cnt == 3 & h3 != row) * own) * mvesLeft < zugzwang) {
+                zugzwang = mvesLeft;
+            }
         }
     }
 
     // cols
-    int c_fill[5];
+    int c_fill[5] = {0};
     for (int col = 0; col < COLS; ++col) {
         int shift = col * ROWS;
         auto col1 = (t1 >> shift);
@@ -447,11 +452,26 @@ inline int Board::scorePlyr(bool plyr) const {
             bool m12 = ((dia14 & D_MSK_1) == 0) * ((dia13 & D_MSK_1) > 0);
             cov |= (m11 * (D_MSK_0 << off));
             cov |= (m12 * (D_MSK_1 << off));
+
+            size_t cnt1 = popcount(dia11 & D_MSK_0);
+            size_t cnt2 = popcount(dia13 & D_MSK_1);
+
+            int h31 = _h[countr_zero(~(dia11 & D_MSK_0) & D_MSK_0) / ROWS];
+            int h32 = _h[countr_zero(~(dia13 & D_MSK_1) & D_MSK_1) / ROWS];
+            zugzwang += (m11 * (cnt1 == 3) * ((mvesLeft + h31) & 1)) * mvesLeft;
+            zugzwang += (m12 * (cnt2 == 3) * ((mvesLeft + h32) & 1)) * mvesLeft;
         }
     }
 
-    int totalFill = r_fill[2] * 2 + r_fill[3] * 4 + c_fill[3] * 10;
-    return (int) ((popcount(cov) / N) * 100 + totalFill - zugzwang);
+    //int totalFill = r_fill[2] * 2 + r_fill[3] * 4 + c_fill[3] * 10;
+    int scoreCov = popcount(cov) * 100;
+    int scoreZugzwang = (zugzwang > 0) * _nmves;
+
+    int score = (int) (scoreCov + scoreZugzwang);
+    if (score > SCORE_WIN || score < -SCORE_WIN) {
+        cout << "WARN: ambiguous score out of bounds" << endl;
+    }
+    return score;
 }
 
 bool Board::won() const {

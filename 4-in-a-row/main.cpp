@@ -92,7 +92,7 @@ void playSimple() {
         } else {
             auto m = b.search();
             cout << "player 2 (computer) played in column " << m.move.col << endl;
-            cout << "computer is " << status_to_string(m.status) << endl;
+            cout << "computer is " << status_to_string(m.status) << " (score " << m.move.score << ")" << endl;
             b = b.move(m.move.col);
         }
         cout << b << endl;

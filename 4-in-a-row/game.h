@@ -25,18 +25,22 @@ enum Status {
 };
 
 static std::string status_to_string(const Status &status) {
+    std::stringstream ss;
     switch (status) {
         case EQUAL: {
-            return "equal";
+            ss << "equal";
+            break;
         }
         case LOSING: {
-            return "losing";
+            ss << "losing";
+            break;
         }
         case WINNING: {
-            return "winning";
+            ss << "winning";
+            break;
         }
     }
-    return ""; // invariant
+    return ss.str();
 }
 
 struct Eval {
