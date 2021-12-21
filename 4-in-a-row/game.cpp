@@ -10,7 +10,6 @@
 #undef  DEBUG
 
 #define OUT_BIT(long) (cout << bitset<N>(long) << endl);
-#define BIT_CNT(l) (bitset<N>(l).count())
 
 #define AB_MIN std::numeric_limits<int>::min()
 #define AB_MAX std::numeric_limits<int>::max()
@@ -147,14 +146,14 @@ inline bool Board::wonDia(ull t, int col) const {
     const int off = ROWS * col + _h[col] - 1;
     ull blk1 = t & D1_MSK[off];
     ull blk2 = t & D2_MSK[off];
-    return BIT_CNT(blk1 & C_ALL4_1) == 4 ||
-           BIT_CNT(blk1 & C_ALL4_2) == 4 ||
-           BIT_CNT(blk1 & C_ALL4_3) == 4 ||
-           BIT_CNT(blk1 & C_ALL4_4) == 4 ||
-           BIT_CNT(blk2 & C_ALL4_1) == 4 ||
-           BIT_CNT(blk2 & C_ALL4_2) == 4 ||
-           BIT_CNT(blk2 & C_ALL4_3) == 4 ||
-           BIT_CNT(blk2 & C_ALL4_4) == 4;
+    return popcount(blk1 & C_ALL4_1) == 4 ||
+           popcount(blk1 & C_ALL4_2) == 4 ||
+           popcount(blk1 & C_ALL4_3) == 4 ||
+           popcount(blk1 & C_ALL4_4) == 4 ||
+           popcount(blk2 & C_ALL4_1) == 4 ||
+           popcount(blk2 & C_ALL4_2) == 4 ||
+           popcount(blk2 & C_ALL4_3) == 4 ||
+           popcount(blk2 & C_ALL4_4) == 4;
 }
 
 
@@ -418,15 +417,15 @@ inline int Board::scorePlyr(bool plyr) const {
 
         bool m1 = ((col2 & C1) == 0) * ((col1 & C1) > 0);
         cov |= (m1 * C1) << shift;
-        c_fill[m1 * BIT_CNT(col1 & C1)]++;
+        c_fill[m1 * popcount(col1 & C1)]++;
 
         bool m2 = ((col2 & C2) == 0) * ((col1 & C2) > 0);
         cov |= (m2 * C2) << shift;
-        c_fill[m2 * BIT_CNT(col1 & C2)]++;
+        c_fill[m2 * popcount(col1 & C2)]++;
 
         bool m3 = ((col2 & C3) == 0) * ((col1 & C3) > 0);
         cov |= (m3 * C3) << shift;
-        c_fill[m3 * BIT_CNT(col1 & C3)]++;
+        c_fill[m3 * popcount(col1 & C3)]++;
     }
 
     // diag
@@ -440,7 +439,7 @@ inline int Board::scorePlyr(bool plyr) const {
     }
 
     int totalFill = r_fill[2] * 2 + r_fill[3] * 4 + c_fill[3] * 10;
-    return (int) ((BIT_CNT(cov) / N) * 100 + totalFill - zugzwang);
+    return (int) ((popcount(cov) / N) * 100 + totalFill - zugzwang);
 }
 
 inline void Board::covDiag(ull *cov, int off, ull t1, ull t2) {
