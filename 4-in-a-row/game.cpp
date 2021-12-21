@@ -186,7 +186,7 @@ inline bool Board::won(int lastCol) const {
 }
 
 Eval Board::search() const {
-    if (_nmves < 3 * ROWS) {
+    if (_nmves < 4 * ROWS) {
         return search(11);
     }
     // fully expand tree
