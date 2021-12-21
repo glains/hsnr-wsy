@@ -12,6 +12,7 @@ using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::milliseconds;
 
+#define PRINT
 #define DUR_T duration<long long int, std::nano>
 
 void test() {
@@ -113,14 +114,20 @@ void playAutoAgent() {
     while (!b.end()) {
         if (ownTurn) {
             auto m = b.search();
+#ifdef PRINT
             cout << "col: " << m.move.col << " ; score: " << m.move.score << endl;
+#endif
             b = b.move(m.move.col);
         } else {
             auto m = b.search();
+#ifdef PRINT
             cout << "col: " << m.move.col << " ; score: " << m.move.score << endl;
+#endif
             b = b.move(m.move.col);
         }
+#ifdef PRINT
         cout << b << endl;
+#endif
         ownTurn = !ownTurn;
     }
     if (b.won()) {
@@ -140,6 +147,6 @@ int main() {
     //testRow();
     //testMove2();
     //test();
-    playSimple();
-    //playAutoAgent();
+    //playSimple();
+    playAutoAgent();
 }
