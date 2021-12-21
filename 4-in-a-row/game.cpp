@@ -12,6 +12,9 @@
 #define OUT_BIT(long) (cout << bitset<N>(long) << endl);
 #define BIT_CNT(l) (bitset<N>(l).count())
 
+#define AB_MIN std::numeric_limits<int>::min()
+#define AB_MAX std::numeric_limits<int>::max()
+
 using namespace std;
 
 typedef unsigned long long ull;
@@ -127,7 +130,7 @@ inline vector<Board> Board::nextMovesSorted() const {
     vector<Board> moves = nextMoves();
     int scores[moves.size()];
     for (const auto &m: moves) {
-        scores[m.lastMove()] = m.ab_max(3, INT_MIN, INT_MAX).score;
+        scores[m.lastMove()] = m.ab_max(3, AB_MIN, AB_MAX).score;
     }
     sort(moves.begin(), moves.end(),
          [&scores](const Board &a, const Board &b) -> bool {
@@ -183,7 +186,7 @@ inline bool Board::won(int lastCol) const {
     return false;
 }
 
-Move Board::search() const {
+Eval Board::search() const {
     if (_nmves < 3 * ROWS) {
         return search(11);
     }
@@ -191,8 +194,15 @@ Move Board::search() const {
     return search(N);
 }
 
-Move Board::search(int depth) const {
-    return ab_max_init(depth, INT_MIN, INT_MAX);
+Eval Board::search(int depth) const {
+    Move move = ab_max_init(depth, AB_MIN, AB_MAX);
+    Status status = EQUAL;
+    if (move.score >= WINNING) {
+        status = WINNING;
+    } else if (move.score <= -WINNING) {
+        status = LOSING;
+    }
+    return {.move = move, .status = status};
 }
 
 Board Board::move(int col) const {

@@ -23,7 +23,7 @@ void test() {
 
     auto t1 = high_resolution_clock::now();
     for (int t = 0; t < 1000000000; ++t) {
-       int col = b2.search().col;
+        int col = b2.search().move.col;
     }
     auto t2 = high_resolution_clock::now();
 
@@ -39,7 +39,7 @@ void testCol() {
     ull l1 = 0b011100;
     ull l2 = 0b100010;
     Board b2(l1, l2);
-    cout << "col: " << b2.search().col << endl;
+    cout << "col: " << b2.search().move.col << endl;
 }
 
 void testRow() {
@@ -55,7 +55,7 @@ void testMove() {
     Board b2(l1, l2);
     auto move = b2.search(12);
     cout << b2 << endl;
-    cout << b2.move(move.col) << endl;
+    cout << b2.move(move.move.col) << endl;
 }
 
 void testMove2() {
@@ -91,14 +91,15 @@ void playSimple() {
             }
         } else {
             auto m = b.search();
-            cout << "col: " << m.col << " ; score: " << m.score << endl;
-            b = b.move(m.col);
+            cout << "player 2 (computer) played in column " << m.move.col << endl;
+            cout << "computer is " << status_to_string(m.status) << endl;
+            b = b.move(m.move.col);
         }
         cout << b << endl;
         ownTurn = !ownTurn;
     }
     if (ownTurn) {
-        cout << "player 2 has won" << endl;
+        cout << "player 2 (computer) has won" << endl;
     } else {
         cout << "player 1 has won" << endl;
     }
@@ -112,12 +113,12 @@ void playAutoAgent() {
     while (!b.end()) {
         if (ownTurn) {
             auto m = b.search();
-            cout << "col: " << m.col << " ; score: " << m.score << endl;
-            b = b.move(m.col);
+            cout << "col: " << m.move.col << " ; score: " << m.move.score << endl;
+            b = b.move(m.move.col);
         } else {
             auto m = b.search();
-            cout << "col: " << m.col << " ; score: " << m.score << endl;
-            b = b.move(m.col);
+            cout << "col: " << m.move.col << " ; score: " << m.move.score << endl;
+            b = b.move(m.move.col);
         }
         cout << b << endl;
         ownTurn = !ownTurn;
