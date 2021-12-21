@@ -418,8 +418,8 @@ inline int Board::scorePlyr(bool plyr) const {
         int off = i * ROWS;
 
         covDiag(&cov, off, t1, t2);
-        covDiag(&cov, ++off, t1, t2);
-        covDiag(&cov, ++off, t1, t2);
+        covDiag(&cov, off + 1, t1, t2);
+        covDiag(&cov, off + 2, t1, t2);
     }
 
     int totalFill = r_fill[2] * 2 + r_fill[3] * 4 + c_fill[3] * 10;
