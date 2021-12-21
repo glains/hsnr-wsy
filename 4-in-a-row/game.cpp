@@ -431,31 +431,27 @@ inline int Board::scorePlyr(bool plyr) const {
     // diag
 
     for (int i = 0; i < COLS; ++i) {
-        int off = i * ROWS;
+        for (int j = 0; j < 3; ++j) {
+            int off = i * ROWS + j;
 
-        covDiag(&cov, off, t1, t2);
-        covDiag(&cov, off + 1, t1, t2);
-        covDiag(&cov, off + 2, t1, t2);
+            ull t1_h = t1 >> off;
+            ull t2_h = t2 >> off;
+            // bottom-left to top-right
+            ull dia11 = (t1_h & D_MSK_0);
+            ull dia12 = (t2_h & D_MSK_0);
+            // top-left to bottom-right
+            ull dia13 = (t1_h & D_MSK_1);
+            ull dia14 = (t2_h & D_MSK_1);
+
+            bool m11 = ((dia12 & D_MSK_0) == 0) * ((dia11 & D_MSK_0) > 0);
+            bool m12 = ((dia14 & D_MSK_1) == 0) * ((dia13 & D_MSK_1) > 0);
+            cov |= (m11 * (D_MSK_0 << off));
+            cov |= (m12 * (D_MSK_1 << off));
+        }
     }
 
     int totalFill = r_fill[2] * 2 + r_fill[3] * 4 + c_fill[3] * 10;
     return (int) ((popcount(cov) / N) * 100 + totalFill - zugzwang);
-}
-
-inline void Board::covDiag(ull *cov, int off, ull t1, ull t2) {
-    ull t1_h = t1 >> off;
-    ull t2_h = t2 >> off;
-    // bottom-left to top-right
-    ull dia11 = (t1_h & D_MSK_0);
-    ull dia12 = (t2_h & D_MSK_0);
-    // top-left to bottom-right
-    ull dia13 = (t1_h & D_MSK_1);
-    ull dia14 = (t2_h & D_MSK_1);
-
-    bool m11 = ((dia12 & D_MSK_0) == 0) * ((dia11 & D_MSK_0) > 0);
-    bool m12 = ((dia14 & D_MSK_1) == 0) * ((dia13 & D_MSK_1) > 0);
-    *cov |= (m11 * (D_MSK_0 << off));
-    *cov |= (m12 * (D_MSK_1 << off));
 }
 
 bool Board::won() const {

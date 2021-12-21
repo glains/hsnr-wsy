@@ -208,8 +208,6 @@ private:
 
     [[nodiscard]]
     int scorePlyr(bool plyr) const;
-
-    static void covDiag(ull *cov, int off, ull t1, ull t2);
 };
 
 template<typename T>
