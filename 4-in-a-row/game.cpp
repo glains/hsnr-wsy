@@ -1,5 +1,7 @@
 #include "game.h"
 
+#include <bit>
+#include <cmath>
 #include <limits>
 #include <iostream>
 #include <algorithm>
@@ -21,6 +23,12 @@ const ull R1 = 0x41041;
 const ull R2 = 0x1041040;
 const ull R3 = 0x41041000;
 const ull R4 = 0x1041040000;
+
+// 3-connected
+const ull R_S1_1 = 0x1;
+const ull R_S1_2 = 0x40;
+const ull R_S1_3 = 0x1000;
+const ull R_S1_4 = 0x40000;
 
 // 3-connected
 const ull R_CON3_1 = 0x41041;
@@ -367,29 +375,24 @@ inline int Board::scorePlyr(bool plyr) const {
     //  - multiply z with amount of pins already occupied by p1
     //    - will be zero if no pin occupied
     ull cov = 0;
+    int zugzwang;
 
     int r_fill[5];
     // rows
     for (int row = 0; row < ROWS; ++row) {
-        int shift = row;
-        ull row1 = (t1 >> shift);
-        ull row2 = (t2 >> shift);
+        for (int col = 0; col < 4; ++col) {
+            int shift = row + ROWS * col;
+            ull row1 = (t1 >> shift);
+            ull row2 = (t2 >> shift);
 
-        bool m1 = ((row2 & R1) == 0) * ((row1 & R1) > 0);
-        cov |= (m1 * R1) << shift;
-        r_fill[m1 * BIT_CNT(row1 & R1)]++;
+            bool m = ((row2 & R1) == 0) * ((row1 & R1) > 0);
+            cov |= (m * R1) << shift;
+            size_t r1Cnt = BIT_CNT(row1 & R1);
+            r_fill[m * r1Cnt]++;
 
-        bool m2 = ((row2 & R2) == 0) * ((row1 & R2) > 0);
-        cov |= (m2 * R2) << shift;
-        r_fill[m2 * BIT_CNT(row1 & R2)]++;
-
-        bool m3 = ((row2 & R3) == 0) * ((row1 & R3) > 0);
-        cov |= (m3 * R3) << shift;
-        r_fill[m3 * BIT_CNT(row1 & R3)]++;
-
-        bool m4 = ((row2 & R4) == 0) * ((row1 & R4) > 0);
-        cov |= (m4 * (row1 | R4)) << shift;
-        r_fill[m4 * BIT_CNT(row1 & R4)]++;
+            // check gt3
+            zugzwang += (m * (r1Cnt > 2) * ((row1 & R_S1_1) > 0) * (_h[]))
+        }
     }
 
     // cols
