@@ -379,13 +379,17 @@ inline int Board::scorePlyr(bool plyr) const {
         t2 = _mves0;
     }
 
+    int mvesLeft = N - _nmves;
+
     // compute the global maximum covDiag score
     // for each spot of 4 pins (row, col, dia)
     //  - compute positive z if all pins not taken by p2, else 0
     //  - multiply z with amount of pins already occupied by p1
     //    - will be zero if no pin occupied
     ull cov = 0;
-    int zugzwang;
+
+    // counts number of times
+    int zugzwang = 0;
 
     int r_fill[5];
     // rows
@@ -397,11 +401,11 @@ inline int Board::scorePlyr(bool plyr) const {
 
             bool m = ((row2 & R1) == 0) * ((row1 & R1) > 0);
             cov |= (m * R1) << shift;
-            size_t r1Cnt = BIT_CNT(row1 & R1);
-            r_fill[m * r1Cnt]++;
+            size_t cnt = popcount(row1 & R1);
+            r_fill[m * cnt]++;
 
-            // check gt3
-            zugzwang += (m * (r1Cnt > 2) * ((row1 & R_S1_1) > 0) * (_h[]))
+            int h3 = _h[countr_zero(~(row1 & R1) & R1) / ROWS];
+            zugzwang += (m * (cnt == 3) * ((mvesLeft + h3) & 1)) * mvesLeft;
         }
     }
 
@@ -436,7 +440,7 @@ inline int Board::scorePlyr(bool plyr) const {
     }
 
     int totalFill = r_fill[2] * 2 + r_fill[3] * 4 + c_fill[3] * 10;
-    return (int) ((BIT_CNT(cov) / N) * 100 + totalFill);
+    return (int) ((BIT_CNT(cov) / N) * 100 + totalFill - zugzwang);
 }
 
 inline void Board::covDiag(ull *cov, int off, ull t1, ull t2) {

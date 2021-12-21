@@ -36,6 +36,7 @@ static std::string status_to_string(const Status &status) {
             return "winning";
         }
     }
+    return ""; // invariant
 }
 
 struct Eval {
